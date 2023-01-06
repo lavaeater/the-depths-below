@@ -1,1 +1,1 @@
-include 'core', 'lwjgl3', 'teavm'
+include 'gdx-lava','core', 'lwjgl3', 'teavm'
