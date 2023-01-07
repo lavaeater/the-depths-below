@@ -15,11 +15,13 @@ class RenderSystem3d(private val camera: PerspectiveCamera, private val blockMan
         add(DirectionalLight().apply {
             set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f)
         })
-
+        add(DirectionalLight().apply {
+            set(0.2f, 0.8f, 0.8f, 1f, 0.8f, 0.2f)
+        })
     }
     override fun update(deltaTime: Float) {
         modelBatch.begin(camera)
-        modelBatch.render(blockManager.blocks.map { it.modelInstance }, environment)
+        modelBatch.render(blockManager.modelsToRender, environment)
         modelBatch.end()
     }
 }

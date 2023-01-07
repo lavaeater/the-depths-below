@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import eater.injection.InjectionContext.Companion.inject
+import ktx.collections.toGdxArray
 import ktx.math.vec3
 
 class Chunk {
@@ -69,16 +70,21 @@ class Block(val x: Int, val y: Int, val z: Int, val blockType: BlockType) {
 }
 
 class BlockManager(private val gameSettings: DeepGameSettings) {
-    val blocks: Array<Block> = Array(sizeAll) { x ->
-        Array(sizeAll) { y ->
-            Array(sizeAll) { z ->
-                if((1..100).random() > 5)
-                    Block(x, y, z, BlockType.Water)
-                else
-                    Block(x, y, z, BlockType.Coral)
-            }
-        }.flatten().toTypedArray()
-    }.flatten().toTypedArray()
+    val blocks by lazy {
+        val blocks = mutableListOf<Block>()
+        for(x in 0 until sizeAll)
+            for(y in 0 until sizeAll)
+                for(z in 0 until sizeAll) {
+                    if((1..100).random() < 15) {
+                        blocks.add(Block(x, y, z, BlockType.Coral))
+                    }
+                }
+        blocks.toGdxArray()
+    }
+
+    val modelsToRender by lazy {
+        blocks.map { it.modelInstance }
+    }
 
     fun getIndex(x: Int, y: Int, z: Int): Int {
         val modx = x % SizeX
@@ -95,13 +101,13 @@ class BlockManager(private val gameSettings: DeepGameSettings) {
         const val SizeY = Chunk.SizeY;
         val SizeXY = SizeX * SizeY;
         val BufferSize = SizeX * SizeY * SizeZ;
-        const val sizeAll = 10
+        const val sizeAll = 20
         val AddX = SizeY;
         val SubX = -SizeY;
         val AddY = 1;
         val SubY = -1;
         val AddZ = SizeXY;
         val SubZ = -SizeXY;
-        val blockSize = 50f
+        val blockSize = 25f
     }
 }

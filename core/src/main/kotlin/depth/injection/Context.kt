@@ -39,7 +39,7 @@ object Context: InjectionContext() {
                 position.set(vec3(-10f, -10f, -10f))
                 lookAt(vec3(0f,0f,0f))
                 near = 1f
-                far = 300f
+                far = 3000f
             })
             bindSingleton(
                 ExtendViewport(
