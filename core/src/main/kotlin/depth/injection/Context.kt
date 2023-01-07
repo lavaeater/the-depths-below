@@ -36,7 +36,7 @@ object Context: InjectionContext() {
             bindSingleton(BlockManager(inject()))
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
-                fieldOfView = 67f
+                fieldOfView = 30f
                 position.set(vec3(-10f, -10f, -10f))
                 lookAt(vec3(0f,0f,0f))
                 near = 1f

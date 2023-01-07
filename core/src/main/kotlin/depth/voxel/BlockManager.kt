@@ -7,9 +7,9 @@ class BlockManager(private val gameSettings: DeepGameSettings) {
     private val mapGenerator = MapGenerator()
     private val blocks by lazy {
         val blocks = mutableListOf<Block>()
-        for(x in 0 until sizeAll)
-            for(y in 0 until sizeAll)
-                for(z in 0 until sizeAll) {
+        for(x in -sizeAll until sizeAll - 1)
+            for(y in -sizeAll until sizeAll - 1)
+                for(z in -sizeAll until sizeAll - 1) {
                     if(mapGenerator.isCoral(x,y,z)) {
                         blocks.add(Block(x, y, z, BlockType.Coral))
                     }
@@ -36,13 +36,13 @@ class BlockManager(private val gameSettings: DeepGameSettings) {
         const val SizeY = Chunk.SizeY;
         val SizeXY = SizeX * SizeY;
         val BufferSize = SizeX * SizeY * SizeZ;
-        const val sizeAll = 20
+        const val sizeAll = 25
         val AddX = SizeY;
         val SubX = -SizeY;
         val AddY = 1;
         val SubY = -1;
         val AddZ = SizeXY;
         val SubZ = -SizeXY;
-        val blockSize = 25f
+        val blockSize = 1f
     }
 }

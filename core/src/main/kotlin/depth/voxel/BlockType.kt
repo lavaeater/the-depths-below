@@ -25,13 +25,13 @@ sealed class BlockType(val model: Model) : Disposable {
             (VertexAttributes.Usage.Position or VertexAttributes.Usage.Normal).toLong()
         )
     )
-
+//ColorAttribute.createDiffuse(Color.CORAL),
     object Coral : BlockType(
         modelBuilder.createBox(
             BlockManager.blockSize,
             BlockManager.blockSize,
             BlockManager.blockSize,
-            Material(ColorAttribute.createDiffuse(Color.CORAL), TextureAttribute.createDiffuse(assets().coralTexture)),
+            Material(TextureAttribute.createDiffuse(assets().coralTexture)),
             (VertexAttributes.Usage.Position or VertexAttributes.Usage.Normal).toLong()
         )
     )
