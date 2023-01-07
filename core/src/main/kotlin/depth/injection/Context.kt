@@ -32,6 +32,7 @@ object Context: InjectionContext() {
         buildContext {
             val gameSettings = DeepGameSettings()
             bindSingleton(gameSettings)
+            bindSingleton(Assets(inject()))
             bindSingleton(BlockManager(inject()))
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
