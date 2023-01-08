@@ -2,22 +2,25 @@ package depth.injection
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
 import com.badlogic.gdx.graphics.*
-import com.badlogic.gdx.graphics.g2d.Batch
-import com.badlogic.gdx.graphics.g2d.PolygonSpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.RenderSystem3d
 import depth.voxel.BlockManager
 import depth.voxel.DeepGameSettings
-import eater.core.GameSettings
 import eater.core.MainGame
 import eater.ecs.ashley.systems.RemoveEntitySystem
 import eater.injection.InjectionContext
 import ktx.assets.disposeSafely
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 import net.mgsx.gltf.scene3d.scene.SceneManager
-import space.earlygrey.shapedrawer.ShapeDrawer
+import net.mgsx.gltf.scene3d.scene.SceneSkybox
+import net.mgsx.gltf.scene3d.utils.EnvironmentUtil
+
 
 object Context: InjectionContext() {
     private val shapeDrawerRegion: TextureRegion by lazy {
@@ -50,12 +53,41 @@ object Context: InjectionContext() {
                     inject<PerspectiveCamera>() as Camera
                 )
             )
-            bindSingleton(SceneManager().apply {
-                setCamera(inject<PerspectiveCamera>())
-            })
+            bindSingleton(createSceneManager(inject()))
             bindSingleton(getEngine(gameSettings, false))
         }
     }
+
+    fun createSceneManager(camera: PerspectiveCamera) : SceneManager {
+        val sceneManager = SceneManager().apply {
+            setCamera(inject<PerspectiveCamera>())
+        }
+        val environmentCubemap = EnvironmentUtil.createCubemap(
+            InternalFileHandleResolver(),
+            "textures/environment/environment_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
+        )
+        val diffuseCubemap = EnvironmentUtil.createCubemap(
+            InternalFileHandleResolver(),
+            "textures/diffuse/diffuse_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
+        )
+        val specularCubemap = EnvironmentUtil.createCubemap(
+            InternalFileHandleResolver(),
+            "textures/specular/specular_", "_", ".png", 10, EnvironmentUtil.FACE_NAMES_NEG_POS
+        )
+        val brdfLUT = Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"))
+
+        sceneManager.setAmbientLight(1f)
+        sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
+        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
+        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap))
+
+        // setup skybox
+
+        // setup skybox
+        skybox = SceneSkybox(environmentCubemap)
+        sceneManager.setSkyBox(skybox)
+    }
+
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
