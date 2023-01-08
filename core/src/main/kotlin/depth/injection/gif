@@ -1,0 +1,11 @@
+
+ffmpeg example
+
+GIF output from ffmpeg
+183k
+
+ffmpeg can output high quality GIF. Before you start it is always recommended to use a recent version: download or compile.
+
+ffmpeg  -i underwater.mkv \
+    -vf "fps=15,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" \
+    -loop 0 output.gif
