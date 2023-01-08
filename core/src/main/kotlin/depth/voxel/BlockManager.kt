@@ -36,7 +36,7 @@ class BlockManager(private val gameSettings: DeepGameSettings) {
         const val SizeY = Chunk.SizeY;
         val SizeXY = SizeX * SizeY;
         val BufferSize = SizeX * SizeY * SizeZ;
-        const val sizeAll = 25
+        const val sizeAll = 5
         val AddX = SizeY;
         val SubX = -SizeY;
         val AddY = 1;

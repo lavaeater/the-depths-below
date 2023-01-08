@@ -16,6 +16,7 @@ import eater.ecs.ashley.systems.RemoveEntitySystem
 import eater.injection.InjectionContext
 import ktx.assets.disposeSafely
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.scene.SceneManager
 import space.earlygrey.shapedrawer.ShapeDrawer
 
 object Context: InjectionContext() {
@@ -49,13 +50,16 @@ object Context: InjectionContext() {
                     inject<PerspectiveCamera>() as Camera
                 )
             )
+            bindSingleton(SceneManager().apply {
+                setCamera(inject<PerspectiveCamera>())
+            })
             bindSingleton(getEngine(gameSettings, false))
         }
     }
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
-            addSystem(RenderSystem3d(inject(), inject()))
+            addSystem(RenderSystem3d(inject(), inject(), inject()))
         }
     }
 }

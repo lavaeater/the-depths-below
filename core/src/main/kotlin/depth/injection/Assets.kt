@@ -13,6 +13,7 @@ import ktx.assets.DisposableRegistry
 import ktx.assets.disposeSafely
 import ktx.assets.toInternalFile
 import ktx.scene2d.Scene2DSkin
+import net.mgsx.gltf.loaders.gltf.GLTFLoader
 
 fun assets(): Assets {
     return inject()
@@ -33,6 +34,7 @@ class Assets(private val gameSettings: DeepGameSettings) : DisposableRegistry by
     }
 
     val coralTexture = Texture("coral.png".toInternalFile())
+    val submarine by lazy { GLTFLoader().load(Gdx.files.internal("hovercraft.gltf")) }
 
 //    val terrainSprite = Sprite(Texture("terrain/terrain.png".toInternalFile()))
 //    val deerSprite = Sprite(Texture("deer.png".toInternalFile())).apply {

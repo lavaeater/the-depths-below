@@ -30,8 +30,8 @@ class TheDepthsBelow : MainGame() {
         Context.initialize(this)
         camController = CameraInputController(inject<PerspectiveCamera>()).apply { autoUpdate = true }
         Gdx.input.inputProcessor = camController
-        addScreen(FirstScreen(this, inject(), inject()))
-        setScreen<FirstScreen>()
+        addScreen(GameScreen(this, inject(), inject()))
+        setScreen<GameScreen>()
     }
 
     override fun render() {
