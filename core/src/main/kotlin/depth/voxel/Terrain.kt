@@ -20,7 +20,7 @@ open class Terrain(
 
 open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : Terrain(points, size, heightMagnitude) {
     private val noise = Noise(12, 1f / 32f, Noise.PERLIN)
-    val heightValues = Array(points) { x ->
+    private val heightValues = Array(points) { x ->
         Array(points) { y ->
             norm(-1f, 1f, noise.getValue(x.toFloat(), y.toFloat()))
         }
