@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import depth.ecs.components.SceneComponent
 import depth.voxel.BlockManager
+import depth.voxel.HeightMapTerrain
 import ktx.ashley.allOf
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
 import net.mgsx.gltf.scene3d.scene.Scene
@@ -49,10 +50,15 @@ class RenderSystem3d(
 
 //    private val sceneFamily = allOf(SceneComponent::class).get()
     override fun update(deltaTime: Float) {
-        modelBatch.begin(camera)
-        modelBatch.render(blockManager.modelsToRender, environment)
-        modelBatch.end()
+//        modelBatch.begin(camera)
+//        modelBatch.render(blockManager.modelsToRender, environment)
+//        modelBatch.end()
         renderScenes(deltaTime)
+    }
+
+    private val terrain = HeightMapTerrain(100, 200f, 5f)
+    init {
+        sceneManager.addScene(Scene(terrain.modelInstance))
     }
 
     private fun renderScenes(deltaTime: Float) {

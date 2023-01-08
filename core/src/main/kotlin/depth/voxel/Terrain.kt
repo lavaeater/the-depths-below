@@ -1,7 +1,11 @@
 package depth.voxel
 
+import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.VertexAttributes
+import com.badlogic.gdx.graphics.g3d.Material
+import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.utils.Disposable
 import com.github.tommyettinger.digital.MathTools.norm
 import make.some.noise.Noise
@@ -11,7 +15,7 @@ open class Terrain(
     protected val size: Float,
     protected val heightMagnitude: Float
 ) : Disposable {
-    protected lateinit var modelInstance: ModelInstance
+    open lateinit var modelInstance: ModelInstance
 
     override fun dispose() {
 
@@ -47,5 +51,11 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
         update()
     }
 
+    init {
+        val mb = ModelBuilder()
+        mb.begin()
+        mb.part("terrain", heightField.mesh, GL20.GL_TRIANGLES, Material())
+        modelInstance = ModelInstance(mb.end())
+    }
 
 }
