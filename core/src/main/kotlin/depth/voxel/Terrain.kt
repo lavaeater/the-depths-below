@@ -16,10 +16,6 @@ open class Terrain(
     protected val heightMagnitude: Float
 ) : Disposable {
     open lateinit var modelInstance: ModelInstance
-
-    override fun dispose() {
-
-    }
 }
 
 open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : Terrain(points, size, heightMagnitude) {
@@ -56,6 +52,10 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
         mb.begin()
         mb.part("terrain", heightField.mesh, GL20.GL_TRIANGLES, Material())
         modelInstance = ModelInstance(mb.end())
+    }
+
+    override fun dispose() {
+        heightField.dispose()
     }
 
 }
