@@ -6,8 +6,11 @@ import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
 
 fun createSubMarine() {
-    inject<SceneManager>().addScene(Scene(assets().submarine.scene).apply {
-                                                                          this.modelInstance.transform.setToWorld(
-                                                                              Vector3.Zero, Vector3.X, Vector3.Y)
-    }, true)
+    inject<SceneManager>().addScene(Scene(assets().submarine.scene)
+        .apply {
+            this.modelInstance.transform.setToWorld(
+                Vector3.Zero, Vector3.X, Vector3.Y
+            )
+        }, true
+    )
 }
