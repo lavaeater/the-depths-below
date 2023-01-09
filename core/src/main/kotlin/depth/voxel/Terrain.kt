@@ -45,7 +45,7 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
 
         val scaleDomain = ModuleScaleDomain()
         scaleDomain.setSource(correct)
-        val scale = 64.0
+        val scale = 8.0
         scaleDomain.setScaleX(scale)
         scaleDomain.setScaleY(scale)
         scaleDomain.setScaleZ(scale)
@@ -65,22 +65,7 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
                              }, IMappingUpdateListener.NULL_LISTENER)
 
     }
-    private val otherNoise by lazy {
 
-        val basis = ModuleBasisFunction()
-        basis.setType(BasisType.SIMPLEX)
-        basis.seed = 42
-
-        val correct = ModuleAutoCorrect()
-        correct.setSource(basis)
-        correct.calculateAll()
-
-        val scaleDomain = ModuleScaleDomain()
-        scaleDomain.setSource(correct)
-        scaleDomain.setScaleX(4.0)
-        scaleDomain.setScaleY(4.0)
-        scaleDomain
-    }
     private var minVal = 0f
     private var maxVal = 0f
 
@@ -90,8 +75,11 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
         heightValues.flatten().toFloatArray(),
         points,
         points,
-        true,
-        VertexAttributes.Usage.Position or VertexAttributes.Usage.Normal or VertexAttributes.Usage.ColorUnpacked or VertexAttributes.Usage.TextureCoordinates
+        false,
+        VertexAttributes.Usage.Position or
+            VertexAttributes.Usage.Normal or
+            VertexAttributes.Usage.ColorUnpacked or
+            VertexAttributes.Usage.TextureCoordinates
     ).apply {
         corner00.set(0f, 0f, 0f)
         corner10.set(size, 0f, 0f)

@@ -1,6 +1,7 @@
 package depth.core
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController
 import depth.injection.Context
@@ -28,7 +29,13 @@ class TheDepthsBelow : MainGame() {
 
     override fun create() {
         Context.initialize(this)
-        camController = CameraInputController(inject<PerspectiveCamera>()).apply { autoUpdate = true }
+        camController = CameraInputController(inject<PerspectiveCamera>()).apply {
+            translateUnits = 25f
+            rotateLeftKey = Input.Keys.A
+            rotateRightKey = Input.Keys.D
+            autoUpdate = true
+
+        }
         Gdx.input.inputProcessor = camController
         addScreen(GameScreen(this, inject(), inject()))
         setScreen<GameScreen>()
