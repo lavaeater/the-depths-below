@@ -10,7 +10,7 @@ import depth.core.TheDepthsBelow
 fun main() {
     Lwjgl3Application(TheDepthsBelow(), Lwjgl3ApplicationConfiguration().apply {
         setTitle("the-depths-below")
-        setWindowedMode(640, 480)
+        setWindowedMode(1920, 1080)
         setWindowIcon(*(arrayOf(128, 64, 32, 16).map { "libgdx$it.png" }.toTypedArray()))
     })
 }

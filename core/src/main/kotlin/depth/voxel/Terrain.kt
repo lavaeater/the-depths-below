@@ -3,12 +3,19 @@ package depth.voxel
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
-import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.utils.Disposable
 import com.github.tommyettinger.digital.MathTools.norm
+import com.sudoplay.joise.mapping.Mapping
+import com.sudoplay.joise.mapping.MappingMode
+import com.sudoplay.joise.module.ModuleAutoCorrect
+import com.sudoplay.joise.module.ModuleBasisFunction
+import com.sudoplay.joise.module.ModuleBasisFunction.BasisType
+import com.sudoplay.joise.module.ModuleScaleDomain
+import ktx.log.info
 import make.some.noise.Noise
+
 
 abstract class Terrain(
     protected val points: Int,
@@ -19,12 +26,47 @@ abstract class Terrain(
 }
 
 open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : Terrain(points, size, heightMagnitude) {
-    private val noise = Noise(12, 1f / 32f, Noise.PERLIN)
+    private val noise = Noise((0..1000).random(), 1f / 4f, Noise.CELLULAR)
     private val heightValues = Array(points) { x ->
         Array(points) { y ->
-            norm(-1f, 1f, noise.getValue(x.toFloat() * 10f, y.toFloat() * 10f))
+            0f
         }
     }.flatten().toFloatArray()
+    init {
+        val basis = ModuleBasisFunction()
+        basis.setType(BasisType.SIMPLEX)
+        basis.seed = 42
+
+        val correct = ModuleAutoCorrect()
+        correct.setSource(basis)
+        correct.calculateAll()
+
+        val scaleDomain = ModuleScaleDomain()
+        scaleDomain.setSource(correct)
+        scaleDomain.setScaleX(4.0)
+        scaleDomain.setScaleY(4.0)
+        scaleDomain
+        Mapping.map3D(MappingMode.SEAMLESS_XYZ, points, points, points,scaleDomain)
+
+    }
+    private val otherNoise by lazy {
+
+        val basis = ModuleBasisFunction()
+        basis.setType(BasisType.SIMPLEX)
+        basis.seed = 42
+
+        val correct = ModuleAutoCorrect()
+        correct.setSource(basis)
+        correct.calculateAll()
+
+        val scaleDomain = ModuleScaleDomain()
+        scaleDomain.setSource(correct)
+        scaleDomain.setScaleX(4.0)
+        scaleDomain.setScaleY(4.0)
+        scaleDomain
+    }
+    private var minVal = 0f
+    private var maxVal = 0f
 
 
     private val heightField = HeightField(

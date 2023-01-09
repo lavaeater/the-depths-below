@@ -28,6 +28,7 @@ dependencies {
   api "com.github.tommyettinger:digital:$digitalVersion"
   api "com.github.tommyettinger:kryo-digital:$kryoDigitalVersion"
   api "com.github.tommyettinger:make_some_noise:$makeSomeNoiseVersion"
+  api 'com.github.czyzby:noise4j:0.1.0'
   api "com.github.tommyettinger:regexodus:$regExodusVersion"
   api "com.kotcrab.vis:vis-ui:$visUiVersion"
   api "com.rafaskoberg.gdx:typing-label:$typingLabelVersion"

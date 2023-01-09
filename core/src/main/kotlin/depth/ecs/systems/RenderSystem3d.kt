@@ -53,7 +53,7 @@ class RenderSystem3d(
         renderScenes(deltaTime)
     }
 
-    private val terrain = HeightMapTerrain(100, 200f, 5f)
+    private val terrain = HeightMapTerrain(1000, 2000f, 15f)
     init {
         sceneManager.addScene(Scene(terrain.modelInstance))
     }
