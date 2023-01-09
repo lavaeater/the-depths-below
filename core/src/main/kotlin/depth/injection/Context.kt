@@ -41,10 +41,10 @@ object Context: InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 30f
-                position.set(vec3(25f, 25f, 25f))
-                lookAt(vec3(50f,0f,0f))
+                position.set(vec3(25f, 5f, 25f))
+                lookAt(vec3(0f,0f,50f))
                 near = 1f
-                far = 300f
+                far = 3000f
             })
             bindSingleton(
                 ExtendViewport(
