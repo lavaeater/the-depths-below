@@ -50,13 +50,10 @@ class RenderSystem3d(
 
 //    private val sceneFamily = allOf(SceneComponent::class).get()
     override fun update(deltaTime: Float) {
-//        modelBatch.begin(camera)
-//        modelBatch.render(blockManager.modelsToRender, environment)
-//        modelBatch.end()
         renderScenes(deltaTime)
     }
 
-    private val terrain = HeightMapTerrain(100, 200f, 5f)
+    private val terrain = HeightMapTerrain(1000, 200f, 5f)
     init {
         sceneManager.addScene(Scene(terrain.modelInstance))
     }

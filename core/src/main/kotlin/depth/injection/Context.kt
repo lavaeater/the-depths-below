@@ -41,10 +41,10 @@ object Context: InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 30f
-                position.set(vec3(-10f, -10f, -10f))
-                lookAt(vec3(0f,0f,0f))
+                position.set(vec3(25f, 25f, 25f))
+                lookAt(vec3(50f,0f,0f))
                 near = 1f
-                far = 3000f
+                far = 300f
             })
             bindSingleton(
                 ExtendViewport(
@@ -84,8 +84,9 @@ object Context: InjectionContext() {
         // setup skybox
 
         // setup skybox
-        skybox = SceneSkybox(environmentCubemap)
-        sceneManager.setSkyBox(skybox)
+        val skybox = SceneSkybox(environmentCubemap)
+        sceneManager.skyBox = skybox
+        return sceneManager
     }
 
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {

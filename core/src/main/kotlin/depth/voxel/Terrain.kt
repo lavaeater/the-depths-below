@@ -10,7 +10,7 @@ import com.badlogic.gdx.utils.Disposable
 import com.github.tommyettinger.digital.MathTools.norm
 import make.some.noise.Noise
 
-open class Terrain(
+abstract class Terrain(
     protected val points: Int,
     protected val size: Float,
     protected val heightMagnitude: Float
@@ -22,7 +22,7 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
     private val noise = Noise(12, 1f / 32f, Noise.PERLIN)
     private val heightValues = Array(points) { x ->
         Array(points) { y ->
-            norm(-1f, 1f, noise.getValue(x.toFloat(), y.toFloat()))
+            norm(-1f, 1f, noise.getValue(x.toFloat() * 10f, y.toFloat() * 10f))
         }
     }.flatten().toFloatArray()
 
