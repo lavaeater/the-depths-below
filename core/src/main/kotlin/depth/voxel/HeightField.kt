@@ -128,7 +128,7 @@ class HeightField(isStatic: Boolean, width: Int, height: Int, smooth: Boolean, a
         set(colorData, format)
     }
 
-    constructor(isStatic: Boolean, data: FloatArray, width: Int, height: Int, smooth: Boolean, attributes: Int) : this(
+    constructor(isStatic: Boolean, data: DoubleArray, width: Int, height: Int, smooth: Boolean, attributes: Int) : this(
         isStatic,
         width,
         height,
@@ -341,7 +341,7 @@ class HeightField(isStatic: Boolean, width: Int, height: Int, smooth: Boolean, a
     }
 
     @JvmOverloads
-    fun set(data: FloatArray, offset: Int = 0) {
+    fun set(data: DoubleArray, offset: Int = 0) {
         if (this.data.size > data.size - offset) throw GdxRuntimeException("Incorrect data size")
         System.arraycopy(data, offset, this.data, 0, this.data.size)
         update()
@@ -353,7 +353,7 @@ class HeightField(isStatic: Boolean, width: Int, height: Int, smooth: Boolean, a
 
     companion object {
         /** Simply creates an array containing only all the red components of the data.  */
-        fun heightColorsToMap(data: ByteBuffer, format: Pixmap.Format, width: Int, height: Int): FloatArray {
+        fun heightColorsToMap(data: ByteBuffer, format: Pixmap.Format, width: Int, height: Int): DoubleArray {
             val bytesPerColor =
                 if (format == Pixmap.Format.RGB888) 3 else if (format == Pixmap.Format.RGBA8888) 4 else 0
             if (bytesPerColor == 0) throw GdxRuntimeException("Unsupported format, should be either RGB8 or RGBA8")
@@ -369,11 +369,11 @@ class HeightField(isStatic: Boolean, width: Int, height: Int, smooth: Boolean, a
                 data[source]
                 (data as Buffer).position(startPos)
             }
-            val dest = FloatArray(width * height)
+            val dest = DoubleArray(width * height)
             for (i in dest.indices) {
                 var v = source!![sourceOffset + i * bytesPerColor].toInt()
                 v = if (v < 0) 256 + v else v
-                dest[i] = v.toFloat() / 255f
+                dest[i] = v.toDouble() / 255.0
             }
             return dest
         }

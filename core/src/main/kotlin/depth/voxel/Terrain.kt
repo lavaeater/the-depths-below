@@ -12,6 +12,7 @@ import com.sudoplay.joise.module.ModuleAutoCorrect
 import com.sudoplay.joise.module.ModuleBasisFunction
 import com.sudoplay.joise.module.ModuleBasisFunction.BasisType
 import com.sudoplay.joise.module.ModuleScaleDomain
+import depth.marchingcubes.pow
 import ktx.log.info
 import make.some.noise.Noise
 import kotlin.math.min
@@ -25,46 +26,44 @@ abstract class Terrain(
     open lateinit var modelInstance: ModelInstance
 }
 
-open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : Terrain(points, size, heightMagnitude) {
+open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float,
+                            heightValues: DoubleArray = DoubleArray(points.pow(2)) { 0.0 }
+) : Terrain(points, size, heightMagnitude) {
     private val noise = Noise((0..1000).random(), 1f / 4f, Noise.CELLULAR)
-    private val heightValues = Array(points) { x ->
-        Array(points) { y ->
-            0.0f
-        }
-    }
-    init {
-        var minVal = 0f
-        var maxval = 0f
-        val basis = ModuleBasisFunction()
-        basis.setType(BasisType.SIMPLEX)
-        basis.seed = (1..1000).random().toLong()
 
-        val correct = ModuleAutoCorrect()
-        correct.setSource(basis)
-        correct.calculateAll()
-
-        val scaleDomain = ModuleScaleDomain()
-        scaleDomain.setSource(correct)
-        val scale = 8.0
-        scaleDomain.setScaleX(scale)
-        scaleDomain.setScaleY(scale)
-        scaleDomain.setScaleZ(scale)
-        scaleDomain.setScaleU(scale)
-        scaleDomain.setScaleW(scale)
-        Mapping.map2DNoZ(MappingMode.SEAMLESS_XY, points, points, scaleDomain, MappingRange.DEFAULT,
-            IMapping2DWriter { x, y, value ->
-                if(value < minVal) {
-                    minVal = value.toFloat()
-                    info { "Min: $minVal" }
-                }
-                if(value > maxVal) {
-                    maxVal = value.toFloat()
-                    info { "Max: $maxVal" }
-                }
-                heightValues[x][y] = value.toFloat()
-                             }, IMappingUpdateListener.NULL_LISTENER)
-
-    }
+//    init {
+//        var minVal = 0f
+//        var maxval = 0f
+//        val basis = ModuleBasisFunction()
+//        basis.setType(BasisType.SIMPLEX)
+//        basis.seed = (1..1000).random().toLong()
+//
+//        val correct = ModuleAutoCorrect()
+//        correct.setSource(basis)
+//        correct.calculateAll()
+//
+//        val scaleDomain = ModuleScaleDomain()
+//        scaleDomain.setSource(correct)
+//        val scale = 8.0
+//        scaleDomain.setScaleX(scale)
+//        scaleDomain.setScaleY(scale)
+//        scaleDomain.setScaleZ(scale)
+//        scaleDomain.setScaleU(scale)
+//        scaleDomain.setScaleW(scale)
+//        Mapping.map2DNoZ(MappingMode.SEAMLESS_XY, points, points, scaleDomain, MappingRange.DEFAULT,
+//            IMapping2DWriter { x, y, value ->
+//                if(value < minVal) {
+//                    minVal = value.toFloat()
+//                    info { "Min: $minVal" }
+//                }
+//                if(value > maxVal) {
+//                    maxVal = value.toFloat()
+//                    info { "Max: $maxVal" }
+//                }
+//                heightValues[x][y] = value
+//                             }, IMappingUpdateListener.NULL_LISTENER)
+//
+//    }
 
     private var minVal = 0f
     private var maxVal = 0f
@@ -72,7 +71,7 @@ open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float) : 
 
     private val heightField = HeightField(
         true,
-        heightValues.flatten().toFloatArray(),
+        heightValues,
         points,
         points,
         false,
