@@ -1,7 +1,7 @@
 package depth.marchingcubes
 
+import com.badlogic.gdx.math.Vector3
 import ktx.math.vec3
-import sun.security.ec.point.ProjectivePoint.Mutable
 
 /**
  * Created by Primoz on 11. 07. 2016.
@@ -20,18 +20,19 @@ object MarchingCubes {
         size: Int,
         voxDim: Vector3,
         isoLevel: Double
-    ): List<List<DoubleArray>> {
-        val result = mutableListOf<MutableList<DoubleArray>>()
-        val vertices = mutableListOf<DoubleArray>()
+    ): List<List<Vector3>> {
+        val result = mutableListOf<MutableList<Vector3>>()
+        val vertices = mutableListOf<Vector3>()
         // Actual position along edge weighted according to function values.
         val vertList = Array(12) { vec3() }
 
 
         // Calculate maximal possible axis value (used in vertice normalization)
-        val maxX = voxDim[0] * (size - 1)
-        val maxY = voxDim[1] * (size - 1)
-        val maxZ = voxDim[2] * (size - 1)
-        val maxAxisVal = Math.max(maxX, Math.max(maxY, maxZ))
+        val maxX = voxDim.x * (size - 1)
+        val maxY = voxDim.y * (size - 1)
+        val maxZ = voxDim.z * (size - 1)
+        val maxAxisVal = maxX.coerceAtLeast(maxY.coerceAtLeast(maxZ))
+        val smallSize = size - 2
 
         // Volume iteration
         for (z in 0 until size - 1) {
@@ -52,17 +53,17 @@ object MarchingCubes {
                     //              | /                 | /
                     //              |/__________________|/
                     //             p                     px
-                    val p = x + size * y + size * size * z
+                    val p = x + smallSize * y + smallSize * smallSize * z
                     val px = p + 1
-                    val py = p + size
+                    val py = p + smallSize
                     val pxy = py + 1
-                    val pz = p + size * size
-                    val pxz = px + size * size
-                    val pyz = py + size * size
-                    val pxyz = pxy + size * size
+                    val pz = p + smallSize * smallSize
+                    val pxz = px + smallSize * smallSize
+                    val pyz = py + smallSize * smallSize
+                    val pxyz = pxy + smallSize * smallSize
 
                     //							  X              Y                    Z
-                    val position = vec3(x * voxDim[0], y * voxDim[1], z * voxDim[2])
+                    val position = vec3(x * voxDim.x, y * voxDim.y, z * voxDim.z)
 
                     // Voxel intensities
                     val value0 = values[p]
@@ -109,99 +110,90 @@ object MarchingCubes {
                         vertList[1].set(
                                 position.x + voxDim.x,
                                 position.y, position.z)
-                            ).lerp(vec3(position.x + voxDim.x, position.y + voxDim.y, position.z), mu)
+                            .lerp(vec3(position.x + voxDim.x, position.y + voxDim.y, position.z), mu)
                     }
                     if (bits and 4 != 0) {
                         mu = ((isoLevel - value2) / (value3 - value2)).toFloat()
-                        vertList[2] = lerp(
-                            floatArrayOf(
-                                position[0], position[1] + voxDim[1],
-                                position[2]
-                            ), floatArrayOf(position[0] + voxDim[0], position[1] + voxDim[1], position[2]), mu
-                        )
+                        vertList[2].set(
+                                position.x, position.y + voxDim.y,
+                                position.z
+                            ).lerp(vec3(position.x + voxDim.x, position.y + voxDim.y, position.z), mu)
                     }
                     if (bits and 8 != 0) {
                         mu = ((isoLevel - value0) / (value2 - value0)).toFloat()
-                        vertList[3] = lerp(
-                            position, floatArrayOf(
-                                position[0], position[1] + voxDim[1],
-                                position[2]
+                        vertList[3].set(
+                            position).lerp(vec3(
+                                position.x, position.y + voxDim.y,
+                                position.z
                             ), mu
                         )
                     }
                     // top of the cube
                     if (bits and 16 != 0) {
                         mu = ((isoLevel - value4) / (value5 - value4)).toFloat()
-                        vertList[4] = lerp(
-                            floatArrayOf(position[0], position[1], position[2] + voxDim[2]), floatArrayOf(
-                                position[0] + voxDim[0], position[1], position[2] + voxDim[2]
+                        vertList[4].set(position.x, position.y, position.z + voxDim.z).lerp(vec3(
+                                position.x + voxDim.x, position.y, position.z + voxDim.z
                             ), mu
                         )
                     }
                     if (bits and 32 != 0) {
                         mu = ((isoLevel - value5) / (value7 - value5)).toFloat()
-                        vertList[5] = lerp(
-                            floatArrayOf(
-                                position[0] + voxDim[0],
-                                position[1], position[2] + voxDim[2]
-                            ),
-                            floatArrayOf(position[0] + voxDim[0], position[1] + voxDim[1], position[2] + voxDim[2]),
+                        vertList[5].set(
+                                position.x + voxDim.x,
+                                position.y, position.z + voxDim.z
+                            ).lerp(vec3(position.x + voxDim.x, position.y + voxDim.y, position.z + voxDim.z),
                             mu
                         )
                     }
                     if (bits and 64 != 0) {
                         mu = ((isoLevel - value6) / (value7 - value6)).toFloat()
-                        vertList[6] = lerp(
-                            floatArrayOf(position[0], position[1] + voxDim[1], position[2] + voxDim[2]), floatArrayOf(
-                                position[0] + voxDim[0], position[1] + voxDim[1], position[2] + voxDim[2]
+                        vertList[6].set(position.x, position.y + voxDim.y, position.z + voxDim.z).lerp(vec3(
+                                position.x + voxDim.x, position.y + voxDim.y, position.z + voxDim.z
                             ), mu
                         )
                     }
                     if (bits and 128 != 0) {
                         mu = ((isoLevel - value4) / (value6 - value4)).toFloat()
-                        vertList[7] = lerp(
-                            floatArrayOf(position[0], position[1], position[2] + voxDim[2]), floatArrayOf(
-                                position[0], position[1] + voxDim[1], position[2] + voxDim[2]
+                        vertList[7].set(
+                            position.x, position.y, position.z + voxDim.z).lerp(vec3(
+                                position.x, position.y + voxDim.y, position.z + voxDim.z
                             ), mu
                         )
                     }
                     // vertical lines of the cube
                     if (bits and 256 != 0) {
                         mu = ((isoLevel - value0) / (value4 - value0)).toFloat()
-                        vertList[8] = lerp(
-                            position, floatArrayOf(
-                                position[0],
-                                position[1], position[2] + voxDim[2]
+                        vertList[8].set(
+                            position).lerp(vec3(
+                                position.x,
+                                position.y, position.z + voxDim.z
                             ), mu
                         )
                     }
                     if (bits and 512 != 0) {
                         mu = ((isoLevel - value1) / (value5 - value1)).toFloat()
-                        vertList[9] = lerp(
-                            floatArrayOf(
-                                position[0] + voxDim[0],
-                                position[1], position[2]
-                            ), floatArrayOf(position[0] + voxDim[0], position[1], position[2] + voxDim[2]), mu
+                        vertList[9].set(
+                                position.x + voxDim.x,
+                                position.y, position.z
+                            ).lerp(vec3(position.x + voxDim.x, position.y, position.z + voxDim.z), mu
                         )
                     }
                     if (bits and 1024 != 0) {
                         mu = ((isoLevel - value3) / (value7 - value3)).toFloat()
-                        vertList[10] = lerp(
-                            floatArrayOf(
-                                position[0] + voxDim[0], position[1] + voxDim[1],
-                                position[2]
-                            ),
-                            floatArrayOf(position[0] + voxDim[0], position[1] + voxDim[1], position[2] + voxDim[2]),
+                        vertList[10].set(
+
+                                position.x + voxDim.x, position.y + voxDim.y,
+                                position.z
+                            ).lerp(vec3(position.x + voxDim.x, position.y + voxDim.y, position.z + voxDim.z),
                             mu
                         )
                     }
                     if (bits and 2048 != 0) {
                         mu = ((isoLevel - value2) / (value6 - value2)).toFloat()
-                        vertList[11] = lerp(
-                            floatArrayOf(
-                                position[0], position[1] + voxDim[1],
-                                position[2]
-                            ), floatArrayOf(position[0], position[1] + voxDim[1], position[2] + voxDim[2]), mu
+                        vertList[11].set(
+                                position.x, position.y + voxDim.y,
+                                position.z
+                            ).lerp(vec3(position.x, position.y + voxDim.y, position.z + voxDim.z), mu
                         )
                     }
 
@@ -216,29 +208,30 @@ object MarchingCubes {
 
                         // Add triangles vertices normalized with the maximal possible value
                         vertices.add(
-                            doubleArrayOf(
-                                vertList[index3][0] / maxAxisVal - 0.5,
-                                vertList[index3][1] / maxAxisVal - 0.5,
-                                vertList[index3][2] / maxAxisVal - 0.5
+                            vec3(
+                                vertList[index3].x / maxAxisVal - 0.5f,
+                                vertList[index3].y / maxAxisVal - 0.5f,
+                                vertList[index3].z / maxAxisVal - 0.5f
                             )
                         )
                         vertices.add(
-                            doubleArrayOf(
-                                vertList[index2][0] / maxAxisVal - 0.5,
-                                vertList[index2][1] / maxAxisVal - 0.5,
-                                vertList[index2][2] / maxAxisVal - 0.5
+                            vec3(
+                                vertList[index2].x / maxAxisVal - 0.5f,
+                                vertList[index2].y / maxAxisVal - 0.5f,
+                                vertList[index2].z / maxAxisVal - 0.5f
                             )
                         )
                         vertices.add(
-                            doubleArrayOf(
-                                vertList[index1][0] / maxAxisVal - 0.5,
-                                vertList[index1][1] / maxAxisVal - 0.5,
-                                vertList[index1][2] / maxAxisVal - 0.5
+                            vec3(
+                                vertList[index1].x / maxAxisVal - 0.5f,
+                                vertList[index1].y / maxAxisVal - 0.5f,
+                                vertList[index1].z / maxAxisVal - 0.5f
                             )
                         )
                         i += 3
                     }
                     result.add(vertices)
+//                    vertList.forEach { it.setZero() }
                     vertices.clear()
                 }
             }

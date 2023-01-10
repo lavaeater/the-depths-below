@@ -12,6 +12,7 @@ import depth.marchingcubes.generateTerrain
 import depth.voxel.BlockManager
 import depth.voxel.HeightMapTerrain
 import ktx.ashley.allOf
+import ktx.math.vec3
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneAsset
@@ -54,7 +55,7 @@ class RenderSystem3d(
         renderScenes(deltaTime)
     }
 
-    private val terrain = generateTerrain(100, floatArrayOf(5f, 5f, 5f),0f, 200f)
+    private val terrain = generateTerrain(100, vec3(5f, 5f, 5f),0.0, 200f)
     init {
         sceneManager.addScene(Scene(terrain.modelInstance))
     }

@@ -1,23 +1,17 @@
 package depth.voxel
 
 import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder
+import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
+import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
-import com.github.tommyettinger.digital.MathTools.norm
 import com.sudoplay.joise.mapping.*
-import com.sudoplay.joise.module.ModuleAutoCorrect
-import com.sudoplay.joise.module.ModuleBasisFunction
-import com.sudoplay.joise.module.ModuleBasisFunction.BasisType
-import com.sudoplay.joise.module.ModuleScaleDomain
 import depth.marchingcubes.pow
-import ktx.log.info
 import make.some.noise.Noise
-import kotlin.math.min
 
 
 abstract class Terrain(
@@ -28,24 +22,31 @@ abstract class Terrain(
     open lateinit var modelInstance: ModelInstance
 }
 
-open class MarchingCubeTerrain(points: Int, size: Float, heightMagnitude: Float = 1f, private val meshValues: List<DoubleArray>): Terrain(points, size, heightMagnitude) {
+open class MarchingCubeTerrain(points: Int, size: Float, heightMagnitude: Float = 1f, cubes: List<List<Vector3>>): Terrain(points, size, heightMagnitude) {
     init {
-        val verticesCount = meshValues.count()
-
 
         val meshBuilder = MeshBuilder()
-        val mesh = meshBuilder.begin(VertexAttributes.Usage.Position.toLong() or
+        meshBuilder.begin(VertexAttributes.Usage.Position.toLong() or
             VertexAttributes.Usage.Normal.toLong() or
             VertexAttributes.Usage.ColorUnpacked.toLong() or
-            VertexAttributes.Usage.TextureCoordinates.toLong())
-        for(vertex in meshValues) {
-            meshBuilder.addMesh(vertex.map { it.toFloat() }.toFloatArray(),)
+            VertexAttributes.Usage.TextureCoordinates.toLong(), GL20.GL_TRIANGLES)
+        for((i, cube) in cubes.withIndex()) {
+            meshBuilder.part(i.toString(), GL20.GL_TRIANGLES)
+            for(j in cube.indices) {
+                if(j % 3 ==0) {
+                    val v1 = VertexInfo().setPos(cube[j])
+                    val v2 = VertexInfo().setPos(cube[j+1])
+                    val v3 = VertexInfo().setPos(cube[j+2])
+                    meshBuilder.triangle(v1, v2, v3)
+                }
+            }
         }
-        meshBuilder.end()
+
+        val mesh = meshBuilder.end()
 
         val mb = ModelBuilder()
         mb.begin()
-        mb.part("terrain", heightField.mesh, GL20.GL_TRIANGLES, Material())
+        mb.part("terrain", mesh, GL20.GL_TRIANGLES, Material())
         modelInstance = ModelInstance(mb.end())
     }
     override fun dispose() {

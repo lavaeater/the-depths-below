@@ -1,5 +1,6 @@
 package depth.marchingcubes
 
+import com.badlogic.gdx.math.Vector3
 import com.sudoplay.joise.mapping.IMapping2DWriter
 import com.sudoplay.joise.mapping.IMappingUpdateListener
 import com.sudoplay.joise.mapping.Mapping
@@ -17,7 +18,7 @@ import ktx.log.info
 
 fun generateTerrain(
     size: Int,
-    voxSize: FloatArray,
+    voxSize: Vector3,
     isoValue: Double,
     terrainSize: Float
 ) : Terrain {
