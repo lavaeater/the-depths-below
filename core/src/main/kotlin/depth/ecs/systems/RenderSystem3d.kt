@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import depth.ecs.components.SceneComponent
+import depth.marchingcubes.generateTerrain
 import depth.voxel.BlockManager
 import depth.voxel.HeightMapTerrain
 import ktx.ashley.allOf
@@ -53,7 +54,7 @@ class RenderSystem3d(
         renderScenes(deltaTime)
     }
 
-    private val terrain = HeightMapTerrain(100, 500f, 15f)
+    private val terrain = generateTerrain(100, floatArrayOf(5f, 5f, 5f),0f, 200f)
     init {
         sceneManager.addScene(Scene(terrain.modelInstance))
     }

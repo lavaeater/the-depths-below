@@ -1,9 +1,11 @@
 package depth.voxel
 
 import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.utils.Disposable
 import com.github.tommyettinger.digital.MathTools.norm
@@ -24,6 +26,32 @@ abstract class Terrain(
     protected val heightMagnitude: Float
 ) : Disposable {
     open lateinit var modelInstance: ModelInstance
+}
+
+open class MarchingCubeTerrain(points: Int, size: Float, heightMagnitude: Float = 1f, private val meshValues: List<DoubleArray>): Terrain(points, size, heightMagnitude) {
+    init {
+        val verticesCount = meshValues.count()
+
+
+        val meshBuilder = MeshBuilder()
+        val mesh = meshBuilder.begin(VertexAttributes.Usage.Position.toLong() or
+            VertexAttributes.Usage.Normal.toLong() or
+            VertexAttributes.Usage.ColorUnpacked.toLong() or
+            VertexAttributes.Usage.TextureCoordinates.toLong())
+        for(vertex in meshValues) {
+            meshBuilder.addMesh(vertex.map { it.toFloat() }.toFloatArray(),)
+        }
+        meshBuilder.end()
+
+        val mb = ModelBuilder()
+        mb.begin()
+        mb.part("terrain", heightField.mesh, GL20.GL_TRIANGLES, Material())
+        modelInstance = ModelInstance(mb.end())
+    }
+    override fun dispose() {
+        modelInstance
+    }
+
 }
 
 open class HeightMapTerrain(points: Int, size: Float, heightMagnitude: Float,
