@@ -6,6 +6,8 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.TextureRegion
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.RenderSystem3d
 import depth.voxel.BlockManager
@@ -41,10 +43,10 @@ object Context: InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 67f
-                position.set(vec3(15f, 15f, 15f))
-                lookAt(vec3(0f,0f,0f))
+                position.set(vec3(0f, 8f * 25f, 0f))
+                lookAt(vec3(8f * 25f,0f,8f * 25f))
                 near = 1f
-                far = 300f
+                far = 3000f
             })
             bindSingleton(
                 ExtendViewport(
@@ -62,10 +64,10 @@ object Context: InjectionContext() {
         val sceneManager = SceneManager().apply {
             setCamera(inject<PerspectiveCamera>())
         }
-        val environmentCubemap = EnvironmentUtil.createCubemap(
-            InternalFileHandleResolver(),
-            "textures/environment/environment_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
-        )
+//        val environmentCubemap = EnvironmentUtil.createCubemap(
+//            InternalFileHandleResolver(),
+//            "textures/environment/environment_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
+//        )
         val diffuseCubemap = EnvironmentUtil.createCubemap(
             InternalFileHandleResolver(),
             "textures/diffuse/diffuse_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
@@ -76,16 +78,29 @@ object Context: InjectionContext() {
         )
         val brdfLUT = Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"))
 
-        sceneManager.setAmbientLight(1f)
+//        sceneManager.setAmbientLight(1f)
+
+        sceneManager.environment.apply {
+            set(ColorAttribute(ColorAttribute.AmbientLight, 0.01f, 0.01f, 0.6f, 1f))
+            add(DirectionalLight().apply {
+                set(0.1f, 0.1f, 0.8f, -1f, -0.8f, -0.2f)
+            })
+            add(DirectionalLight().apply {
+                set(0.2f, 0.1f, 0.8f, 1f, 0.8f, 0.2f)
+            })
+            add(DirectionalLight().apply {
+                set(0.7f, 0.2f, 0.2f, 0f, 0.8f, 0.2f)
+            })
+        }
         sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
         sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
         sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap))
 
         // setup skybox
 
-        // setup skybox
-        val skybox = SceneSkybox(environmentCubemap)
-        sceneManager.skyBox = skybox
+//        // setup skybox
+//        val skybox = SceneSkybox(environmentCubemap)
+//        sceneManager.skyBox = skybox
         return sceneManager
     }
 

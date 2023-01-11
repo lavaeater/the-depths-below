@@ -51,7 +51,7 @@ class RenderSystem3d(
         renderScenes(deltaTime)
     }
 
-    private val terrain = generateMarchingCubeTerrain(1, 50f)
+    private val terrain = generateMarchingCubeTerrain(16, 25f)
 //        MarchingCubeTerrain(floatArrayOf(
 //        -10f,-10f,-10f, // triangle 1 : begin
 //        -10f,-10f, 10f,

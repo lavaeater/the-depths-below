@@ -30,7 +30,7 @@ class TheDepthsBelow : MainGame() {
     override fun create() {
         Context.initialize(this)
         camController = CameraInputController(inject<PerspectiveCamera>()).apply {
-            translateUnits = 25f
+            translateUnits = 100f
             rotateLeftKey = Input.Keys.A
             rotateRightKey = Input.Keys.D
             autoUpdate = true
