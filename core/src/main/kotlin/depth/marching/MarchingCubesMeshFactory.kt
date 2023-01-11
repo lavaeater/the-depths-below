@@ -1,6 +1,7 @@
 package depth.marching
 
 import com.badlogic.gdx.graphics.Mesh
+import com.badlogic.gdx.math.Vector3
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 
@@ -13,8 +14,8 @@ class MarchingCubesMeshFactory {
     private var m_gridLengthY: Int
     private var m_gridLengthZ: Int
     private var m_cubeScalars: FloatArray
-    private var m_origin: Vector3f
-    private var m_vertrexList: MutableList<Vector3f>? = null
+    private var m_origin: Vector3
+    private var m_vertrexList: MutableList<Vector3>? = null
 
     /**
      * Constructs a new MarchingCubesMeshFactory for generating meshes out of a scalar field with the marching cubes algorithm.
@@ -41,7 +42,7 @@ class MarchingCubesMeshFactory {
      * @param origin The local origin for all vertices of the generated mesh.
      * @param cubeDiameter The diameter of a single voxel.
      */
-    constructor(scalarField: Array<Array<FloatArray>>, isoLevel: Float, origin: Vector3f, cubeDiameter: Float) {
+    constructor(scalarField: Array<Array<FloatArray>>, isoLevel: Float, origin: Vector3, cubeDiameter: Float) {
         m_scalarField = scalarField
         m_isoLevel = isoLevel
         m_cubeDiameter = cubeDiameter
@@ -71,7 +72,7 @@ class MarchingCubesMeshFactory {
         ) as FloatBuffer
         var i: Int = MeshBufferUtils.VERTICES_PER_TRIANGLE - 1
         while (i < m_vertrexList!!.size) {
-            val normal: Vector3f = computeTriangleNormal(
+            val normal: Vector3 = computeTriangleNormal(
                 m_vertrexList!![i - 2],
                 m_vertrexList!![i - 1], m_vertrexList!![i]
             )
@@ -92,13 +93,13 @@ class MarchingCubesMeshFactory {
     }
 
     private fun createPositionBuffer(): FloatBuffer {
-        m_vertrexList = ArrayList<Vector3f>()
+        m_vertrexList = ArrayList<Vector3>()
         for (x in -1..m_gridLengthX) for (y in -1..m_gridLengthY) for (z in -1..m_gridLengthZ) {
-            val cubeVertices: Array<Vector3f?> = arrayOfNulls<Vector3f>(MeshBufferUtils.SHARED_VERTICES_PER_CUBE)
+            val cubeVertices: Array<Vector3> = arrayOfNulls<Vector3>(MeshBufferUtils.SHARED_VERTICES_PER_CUBE)
             val cubeIndex = computeCubeIndex(cubeVertices, x, y, z)
             val edgeBitField = MarchingCubesTables.EDGE_TABLE[cubeIndex]
             if (edgeBitField == 0) continue
-            val mcVertices: Array<Vector3f?> = computeMCVertices(cubeVertices, edgeBitField, m_isoLevel)
+            val mcVertices: Array<Vector3> = computeMCVertices(cubeVertices, edgeBitField, m_isoLevel)
             addVerticesToList(m_vertrexList, mcVertices, cubeIndex)
         }
         return addVerticesToPositionBuffer()
@@ -111,7 +112,7 @@ class MarchingCubesMeshFactory {
             m_vertrexList!!.size
         ) as FloatBuffer
         for (i in m_vertrexList!!.indices) {
-            val position: Vector3f = m_vertrexList!![i]
+            val position: Vector3 = m_vertrexList!![i]
             positionBuffer.put(position.x).put(position.y).put(position.z)
         }
         return positionBuffer.flip()
@@ -124,7 +125,7 @@ class MarchingCubesMeshFactory {
      * @param mcVertices The marching cubes vertices.
      * @param cubeIndex The cubeIndex.
      */
-    private fun addVerticesToList(vertrexList: MutableList<Vector3f>?, mcVertices: Array<Vector3f?>, cubeIndex: Int) {
+    private fun addVerticesToList(vertrexList: MutableList<Vector3>?, mcVertices: Array<Vector3>, cubeIndex: Int) {
         val vertexCount = MarchingCubesTables.TRIANGLE_TABLE[cubeIndex].size
         for (i in 0 until vertexCount) vertrexList!!.add(
             mcVertices[MarchingCubesTables.TRIANGLE_TABLE[cubeIndex][i]].add(
@@ -142,11 +143,11 @@ class MarchingCubesMeshFactory {
      * @return The lerped vertices of a cube to form the marching cubes shape.
      */
     private fun computeMCVertices(
-        cubeVertices: Array<Vector3f?>,
+        cubeVertices: Array<Vector3>,
         edgeBitField: Int,
         isoLevel: Float
-    ): Array<Vector3f?> {
-        val lerpedVertices: Array<Vector3f?> = arrayOfNulls<Vector3f>(MarchingCubesTables.EDGE_BITS)
+    ): Array<Vector3> {
+        val lerpedVertices: Array<Vector3> = arrayOfNulls<Vector3>(MarchingCubesTables.EDGE_BITS)
         for (i in 0 until MarchingCubesTables.EDGE_BITS) {
             if (edgeBitField and (1 shl i) != 0) {
                 val edgeFirstIndex = MarchingCubesTables.EDGE_FIRST_VERTEX[i]
@@ -170,16 +171,16 @@ class MarchingCubesMeshFactory {
      * @return The lerped resulting vertex along the edge.
      */
     private fun MCLerp(
-        firstVertex: Vector3f?,
-        secondVertex: Vector3f?,
+        firstVertex: Vector3,
+        secondVertex: Vector3,
         firstScalar: Float,
         secondScalar: Float
-    ): Vector3f? {
+    ): Vector3 {
         if (Math.abs(m_isoLevel - firstScalar) < Math.ulp(1f)) return firstVertex
         if (Math.abs(m_isoLevel - secondScalar) < Math.ulp(1f)) return secondVertex
         if (Math.abs(firstScalar - secondScalar) < Math.ulp(1f)) return firstVertex
         val lerpFactor = (m_isoLevel - firstScalar) / (secondScalar - firstScalar)
-        return firstVertex.clone().interpolateLocal(secondVertex, lerpFactor)
+        return firstVertex.cpy().lerp(secondVertex, lerpFactor)
     }
 
     /**
@@ -191,7 +192,7 @@ class MarchingCubesMeshFactory {
      * @param indexZ The Z position of the marching cube in the grid.
      * @return The cubeIndex.
      */
-    private fun computeCubeIndex(cubeVertices: Array<Vector3f?>, indexX: Int, indexY: Int, indexZ: Int): Int {
+    private fun computeCubeIndex(cubeVertices: Array<Vector3>, indexX: Int, indexY: Int, indexZ: Int): Int {
         m_cubeScalars = FloatArray(MeshBufferUtils.SHARED_VERTICES_PER_CUBE)
         val edgeLength = 2
         var cubeVertexIndex = 0
@@ -215,7 +216,7 @@ class MarchingCubesMeshFactory {
         */for (y in 0 until edgeLength) for (z in 0 until edgeLength) {
             var x = z % edgeLength
             while (x >= 0 && x < edgeLength) {
-                cubeVertices[cubeVertexIndex] = Vector3f(
+                cubeVertices[cubeVertexIndex] = Vector3(
                     (indexX + x) * m_cubeDiameter,
                     (indexY + y) * m_cubeDiameter,
                     (indexZ + z) * m_cubeDiameter
@@ -253,8 +254,8 @@ class MarchingCubesMeshFactory {
         return if (x >= 0 && x < m_scalarField.size && y >= 0 && y < m_scalarField[0].size && z >= 0 && z < m_scalarField[0][0].size) m_scalarField[x][y][z] else 0f
     }
 
-    fun computeCenterPoint(): Vector3f {
-        return Vector3f(
+    fun computeCenterPoint(): Vector3 {
+        return Vector3(
             (-m_gridLengthX * m_cubeDiameter + m_cubeDiameter) / 2,
             (-m_gridLengthY * m_cubeDiameter + m_cubeDiameter) / 2,
             (-m_gridLengthZ * m_cubeDiameter + m_cubeDiameter) / 2
@@ -266,11 +267,11 @@ class MarchingCubesMeshFactory {
     }
 
     companion object {
-        fun computeTriangleNormal(vertices: Array<Vector3f>): Vector3f {
+        fun computeTriangleNormal(vertices: Array<Vector3>): Vector3 {
             return computeTriangleNormal(vertices[0], vertices[1], vertices[2])
         }
 
-        fun computeTriangleNormal(p1: Vector3f?, p2: Vector3f, p3: Vector3f): Vector3f {
+        fun computeTriangleNormal(p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
             return p2.subtract(p1).crossLocal(p3.subtract(p1)).normalizeLocal()
         }
     }
