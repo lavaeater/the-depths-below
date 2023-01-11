@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder
+import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.MathUtils.*
 import com.badlogic.gdx.math.Vector3
@@ -103,23 +104,23 @@ fun getIndex(x: Int, y: Int, z: Int, size: Int): Int {
     return x + (size * (y + size * z))
 }
 
-fun getVertIndexProper(x: Int, y: Int, z:Int): Int {
+fun getVertIndexProper(x: Int, y: Int, z: Int): Int {
     var index = 0
-    if(x == 0 && y == 0 && z == 0) {
+    if (x == 0 && y == 0 && z == 0) {
         index = 0
-    } else if(x == 1 && y == 0 && z == 0) {
+    } else if (x == 1 && y == 0 && z == 0) {
         index = 3
-    } else if(x == 1 && y == 1 && z == 0) {
+    } else if (x == 1 && y == 1 && z == 0) {
         index = 7
-    } else if(x == 1 && y == 1 && z == 1) {
+    } else if (x == 1 && y == 1 && z == 1) {
         index = 6
-    } else if(x == 1 && y == 0 && z == 1) {
+    } else if (x == 1 && y == 0 && z == 1) {
         index = 2
-    } else if(x == 0 && y == 1 && z == 1) {
+    } else if (x == 0 && y == 1 && z == 1) {
         index = 5
-    } else if(x == 0 && y == 0 && z == 1) {
+    } else if (x == 0 && y == 0 && z == 1) {
         index = 1
-    } else if(x == 0 && y == 1 && z == 0) {
+    } else if (x == 0 && y == 1 && z == 0) {
         index = 4
     }
     return index
@@ -176,7 +177,15 @@ fun generateMarchingCubeTerrain(cubesPerSide: Int, sideLength: Float): MarchingC
 //                                pointsPerSide
 //                            ) //yes!
                             val vertVal =
-                                Joiser.getValueFor(x, y, z, totalPerSide, totalPerSide, totalPerSide, 0.01) * 100000f * (1f + ((totalPerSide - y) / totalPerSide))
+                                Joiser.getValueFor(
+                                    x,
+                                    y,
+                                    z,
+                                    totalPerSide,
+                                    totalPerSide,
+                                    totalPerSide,
+                                    0.01
+                                ) * 100000f * (1f + ((totalPerSide - y) / totalPerSide))
                             allVertVals.add(vertVal)
                             vertValues[vertIndex] = vertVal
                         }
@@ -227,12 +236,19 @@ fun generateMarchingCubeTerrain(cubesPerSide: Int, sideLength: Float): MarchingC
     info { "Median: ${allVertVals.sorted()[allVertVals.count() / 2]}" }
     info { "Max: ${allVertVals.max()}" }
     info { "Min: ${allVertVals.min()}" }
+
     return MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
 }
 
 
 open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : Terrain(size) {
     init {
+        /*
+        or
+                VertexAttributes.Usage.Normal.toLong() or
+                VertexAttributes.Usage.ColorUnpacked.toLong() or
+                VertexAttributes.Usage.TextureCoordinates.toLong()
+         */
         val meshBuilder = MeshBuilder()
         meshBuilder.begin(
             VertexAttributes.Usage.Position.toLong() or
@@ -262,9 +278,10 @@ open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : 
             )
         }
 
+        val mesh = meshBuilder.end()
         val mb = ModelBuilder()
         mb.begin()
-        mb.part("terrain", meshBuilder.end(), GL20.GL_TRIANGLES, Material())
+        mb.part("terrain", mesh, GL20.GL_TRIANGLES, Material())
         modelInstance = ModelInstance(mb.end()).apply { transform.setToWorld(Vector3.Zero, Vector3.X, Vector3.Y) }
     }
 

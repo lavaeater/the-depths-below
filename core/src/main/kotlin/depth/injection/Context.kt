@@ -8,8 +8,11 @@ import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
+import com.badlogic.gdx.graphics.g3d.environment.PointLight
+import com.badlogic.gdx.graphics.g3d.environment.SpotLight
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.RenderSystem3d
+import depth.ecs.systems.UpdateSpotLightSystem
 import depth.voxel.BlockManager
 import depth.voxel.DeepGameSettings
 import eater.core.MainGame
@@ -19,12 +22,13 @@ import ktx.assets.disposeSafely
 import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
+import net.mgsx.gltf.scene3d.lights.PointLightEx
+import net.mgsx.gltf.scene3d.lights.SpotLightEx
 import net.mgsx.gltf.scene3d.scene.SceneManager
-import net.mgsx.gltf.scene3d.scene.SceneSkybox
 import net.mgsx.gltf.scene3d.utils.EnvironmentUtil
 
 
-object Context: InjectionContext() {
+object Context : InjectionContext() {
     private val shapeDrawerRegion: TextureRegion by lazy {
         val pixmap = Pixmap(1, 1, Pixmap.Format.RGBA8888)
         pixmap.setColor(Color.WHITE)
@@ -44,7 +48,7 @@ object Context: InjectionContext() {
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 67f
                 position.set(vec3(0f, 8f * 25f, 0f))
-                lookAt(vec3(8f * 25f,0f,8f * 25f))
+                lookAt(vec3(8f * 25f, 0f, 8f * 25f))
                 near = 1f
                 far = 3000f
             })
@@ -60,7 +64,7 @@ object Context: InjectionContext() {
         }
     }
 
-    fun createSceneManager(camera: PerspectiveCamera) : SceneManager {
+    fun createSceneManager(camera: PerspectiveCamera): SceneManager {
         val sceneManager = SceneManager().apply {
             setCamera(inject<PerspectiveCamera>())
         }
@@ -88,9 +92,6 @@ object Context: InjectionContext() {
             add(DirectionalLight().apply {
                 set(0.2f, 0.1f, 0.8f, 1f, 0.8f, 0.2f)
             })
-            add(DirectionalLight().apply {
-                set(0.7f, 0.2f, 0.2f, 0f, 0.8f, 0.2f)
-            })
         }
         sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
         sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
@@ -107,6 +108,11 @@ object Context: InjectionContext() {
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
+            addSystem(UpdateSpotLightSystem(PointLightEx().apply {
+                setColor(Color.WHITE)
+                setIntensity(10000f)
+                inject<SceneManager>().environment.add(this)
+            }, inject()))
             addSystem(RenderSystem3d(inject(), inject(), inject()))
         }
     }
