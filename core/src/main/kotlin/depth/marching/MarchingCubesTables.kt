@@ -13,11 +13,9 @@ object CubeMarcher {
      * I think we need to create a mesh first of all
      */
 
-    
+
 
 }
-
-
 
 internal object MarchingCubesTables {
     const val EDGE_BITS = 12
@@ -278,6 +276,21 @@ internal object MarchingCubesTables {
         0x203,
         0x109,
         0x0
+    )
+
+    val EDGES = arrayOf(
+        intArrayOf(0,1), //0
+        intArrayOf(1,2), //1
+        intArrayOf(2,3), //2
+        intArrayOf(3,0), //3
+        intArrayOf(4,5), //4
+        intArrayOf(5,6), //5
+        intArrayOf(6,7), //6
+        intArrayOf(4,7), //7
+        intArrayOf(0,4), //8
+        intArrayOf(1,5), //9
+        intArrayOf(2,6), //10
+        intArrayOf(3,7), //11
     )
     val EDGE_FIRST_VERTEX = intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3)
     val EDGE_SECOND_VERTEX = intArrayOf(1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7)
