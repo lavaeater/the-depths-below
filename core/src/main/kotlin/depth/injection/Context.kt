@@ -10,10 +10,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.viewport.ExtendViewport
-import depth.ecs.systems.RenderSystem3d
-import depth.ecs.systems.UpdatePerspectiveCameraSystem
-import depth.ecs.systems.UpdatePointLightSystem
-import depth.ecs.systems.UpdateTransformSystem
+import depth.ecs.systems.*
 import depth.voxel.BlockManager
 import depth.voxel.DeepGameSettings
 import eater.core.MainGame
@@ -125,6 +122,9 @@ object Context : InjectionContext() {
             }, inject()))
             addSystem(UpdateTransformSystem())
             addSystem(UpdatePerspectiveCameraSystem(inject()))
+            addSystem(SubmarineControlSystem().apply {
+                Gdx.input.inputProcessor = this
+            })
             addSystem(RenderSystem3d(inject()))
         }
     }

@@ -11,13 +11,14 @@ sealed class Direction {
     object Up: Direction()
     object Down: Direction()
     object Forward: Direction()
-    object Backward: Direction()
+    object Reverse: Direction()
     object Neutral: Direction()
 }
 
 class KeyboardControlComponent: Component, Pool.Poolable {
-    var left = false
-    var right = false
+    var throttle: Direction = Direction.Neutral
+    var horizontal: Direction = Direction.Neutral
+    var vertical: Direction = Direction.Neutral
     override fun reset() {
 
     }

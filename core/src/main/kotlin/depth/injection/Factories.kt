@@ -2,6 +2,7 @@ package depth.injection
 
 import com.badlogic.gdx.math.Vector3
 import depth.ecs.components.Camera3dFollowComponent
+import depth.ecs.components.KeyboardControlComponent
 import depth.ecs.components.SceneComponent
 import depth.ecs.components.Transform3d
 import eater.core.engine
@@ -18,14 +19,15 @@ fun createSubMarine() {
         with<SceneComponent> {
             scene = Scene(assets().submarine.scene).apply {
                 this.modelInstance.transform.setToWorld(
-                    vec3(25f, 25f, 25f), Vector3.X, Vector3.Y
+                    vec3(50f, 100f, -50f), Vector3.X, Vector3.Y
                 )
             }
             inject<SceneManager>().addScene(scene)
         }
         with<Transform3d>()
         with<Camera3dFollowComponent> {
-            offset.set(150f, 25f, 0f)
+            offset.set(15f, 25f, 0f)
         }
+        with<KeyboardControlComponent>()
     }
 }
