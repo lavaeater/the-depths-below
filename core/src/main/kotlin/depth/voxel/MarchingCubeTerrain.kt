@@ -277,14 +277,17 @@ open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : 
                 VertexAttributes.Usage.TextureCoordinates.toLong()
          */
         val meshBuilder = MeshBuilder()
-        val attributes = VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-//            VertexAttribute(VertexAttributes.Usage.Tangent, 4, ShaderProgram.TANGENT_ATTRIBUTE),
+//        val attributes = VertexAttributes(
+//            VertexAttribute.Position(),
+//            VertexAttribute.Normal(),
+////            VertexAttribute(VertexAttributes.Usage.Tangent, 4, ShaderProgram.TANGENT_ATTRIBUTE),
 //            VertexAttribute.TexCoords(0)
+//        )
+        meshBuilder.begin(
+            VertexAttributes.Usage.Position.toLong() or
+                VertexAttributes.Usage.Normal.toLong() or
+                VertexAttributes.Usage.TextureCoordinates.toLong(), GL20.GL_TRIANGLES
         )
-        meshBuilder.begin(attributes, GL20.GL_TRIANGLES)
-
 
 //        meshBuilder.part("Entire thing", GL20.GL_TRIANGLES)
         val color = Color(0.3f, 0.6f, 0.3f, 1f)
@@ -334,19 +337,22 @@ open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : 
         }
 
         val mesh = meshBuilder.end()
-        val material = Material().apply {
-            set(PBRColorAttribute.createBaseColorFactor(color))
-////            set(PBRColorAttribute.createEmissive(Color.RED))
-//            set(PBRTextureAttribute.createBaseColorTexture(assets().diffuseTexture));
-//            set(PBRTextureAttribute.createNormalTexture(assets().normalTexture));
-//            set(PBRTextureAttribute.createMetallicRoughnessTexture(assets().mrTexture));
-        }
         val mb = ModelBuilder()
         mb.begin()
+        val material = Material()
+//        material.set(
+//            PBRColorAttribute.createBaseColorFactor(
+//                Color(Color.WHITE).fromHsv(15f, .9f, .8f)
+//            )
+//        )
+        material.set(PBRTextureAttribute.createBaseColorTexture(assets().diffuseTexture))
+//        material.set(PBRTextureAttribute.createNormalTexture(assets().normalTexture))
+//        material.set(PBRTextureAttribute.createMetallicRoughnessTexture(assets().mrTexture))
+
         mb.part("terrain", mesh, GL20.GL_TRIANGLES, material)
         val model = mb.end()
 //        for (mesh in model.meshes) {
-////            MeshTangentSpaceGenerator.computeTangentSpace(mesh, material, false, true)
+//            MeshTangentSpaceGenerator.computeTangentSpace(mesh, material, false, true)
 //        }
 
         modelInstance = ModelInstance(model).apply { transform.setToWorld(Vector3.Zero, Vector3.X, Vector3.Y) }
