@@ -11,7 +11,9 @@ import com.badlogic.gdx.graphics.g3d.shaders.DepthShader
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.RenderSystem3d
+import depth.ecs.systems.UpdatePerspectiveCameraSystem
 import depth.ecs.systems.UpdatePointLightSystem
+import depth.ecs.systems.UpdateTransformSystem
 import depth.voxel.BlockManager
 import depth.voxel.DeepGameSettings
 import eater.core.MainGame
@@ -121,6 +123,8 @@ object Context : InjectionContext() {
                 setIntensity(100000f)
                 inject<SceneManager>().environment.add(this)
             }, inject()))
+            addSystem(UpdateTransformSystem())
+            addSystem(UpdatePerspectiveCameraSystem(inject()))
             addSystem(RenderSystem3d(inject()))
         }
     }

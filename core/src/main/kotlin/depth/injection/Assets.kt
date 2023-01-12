@@ -29,42 +29,11 @@ class Assets(private val gameSettings: DeepGameSettings) : DisposableRegistry by
     }
 
     val coralTexture = Texture("coral.png".toInternalFile())
-    val submarine by lazy { GLTFLoader().load(Gdx.files.internal("hovercraft.gltf")) }
+    val submarine by lazy { GLTFLoader().load(Gdx.files.internal("models/submarine.gltf")) }
 
     val diffuseTexture = Texture("textures/red_bricks_04_diff_1k.jpg".toInternalFile(), true)
     val normalTexture = Texture("textures/red_bricks_04_nor_gl_1k.jpg".toInternalFile(), true)
     val mrTexture = Texture("textures/red_bricks_04_rough_1k.jpg".toInternalFile(), true)
-
-//    val terrainSprite = Sprite(Texture("terrain/terrain.png".toInternalFile()))
-//    val deerSprite = Sprite(Texture("deer.png".toInternalFile())).apply {
-//        setOriginCenter()
-//        scale(gameSettings.metersPerPixel)
-//    }
-//    val sleighSprite = Sprite(Texture("sleigh.png".toInternalFile())).apply {
-//        setOriginCenter()
-//        flip(false, false)
-//        scale(gameSettings.metersPerPixel)
-//    }
-//
-//    val snowFlakeSprite = Sprite(Texture("snow-flake.png".toInternalFile())).apply {
-//        setOriginCenter()
-//        scale(gameSettings.metersPerPixel)
-//    }
-//
-//    val presentSprite = Sprite(Texture("present.png".toInternalFile())).apply {
-//        setOriginCenter()
-//        scale(gameSettings.metersPerPixel)
-//    }
-//
-//    val houseTopTexture = Texture("city/housetop-1.png".toInternalFile())
-//    val houseNinePatch = NinePatch(houseTopTexture, 4, 4, 4, 4)
-//
-//    val samSiteSprite = Sprite(Texture("city/sam-launcher.png".toInternalFile()))
-//    val samSprite = Sprite(Texture("city/sam.png".toInternalFile()))
-//
-//    val hohoho = Gdx.audio.newSound("audio/hohoho.wav".toInternalFile())
-//    val merryChristmas = Gdx.audio.newSound("audio/merry.wav".toInternalFile())
-//    val boom = Gdx.audio.newSound("audio/boom.wav".toInternalFile())
 
     override fun dispose() {
         registeredDisposables.disposeSafely()
