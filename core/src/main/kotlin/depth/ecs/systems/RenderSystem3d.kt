@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider
 import depth.voxel.BlockManager
+import depth.voxel.MarchingCubeTerrain
 import depth.voxel.generateMarchingCubeTerrain
 import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
 import net.mgsx.gltf.scene3d.lights.PointLightEx
@@ -20,85 +21,60 @@ import net.mgsx.gltf.scene3d.scene.SceneSkybox
 
 
 class RenderSystem3d(
-    private val camera: PerspectiveCamera,
-    private val blockManager: BlockManager,
-    private val sceneManager: SceneManager,
-
+    private val sceneManager: SceneManager
     ) : EntitySystem() {
-    //    private val sceneAsset: SceneAsset? = null
-//    private val scene: Scene? = null
-    private val diffuseCubemap: Cubemap? = null
-    private val environmentCubemap: Cubemap? = null
-    private val specularCubemap: Cubemap? = null
-
-    //    private val brdfLUT: Texture? = null
-    private val time = 0f
-    private val skybox: SceneSkybox? = null
-    private val light: DirectionalLightEx? = null
-
-    private val modelBatch = ModelBatch()
-    private val environment = Environment().apply {
-        set(ColorAttribute(ColorAttribute.AmbientLight, 0.1f, 0.1f, 0.4f, 1f))
-        add(DirectionalLight().apply {
-            set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f)
-        })
-        add(DirectionalLight().apply {
-            set(0.2f, 0.8f, 0.8f, 1f, 0.8f, 0.2f)
-        })
-        add(DirectionalLight().apply {
-            set(0.7f, 0.2f, 0.2f, 0f, 0.8f, 0.2f)
-        })
-    }
-
-    //    private val sceneFamily = allOf(SceneComponent::class).get()
     override fun update(deltaTime: Float) {
         renderScenes(deltaTime)
     }
 
+    //
     private val terrain = generateMarchingCubeTerrain(16, 25f)
+//        MarchingCubeTerrain(
+//        floatArrayOf(
+//            -10f, -10f, -10f, // triangle 1 : begin
+//            -10f, -10f, 10f,
+//            -10f, 10f, 10f, // triangle 1 : end
+//            10f, 10f, -10f, // triangle 2 : begin
+//            -10f, -10f, -10f,
+//            -10f, 10f, -10f, // triangle 2 : end
+//            10f, -10f, 10f,
+//            -10f, -10f, -10f,
+//            10f, -10f, -10f,
+//            10f, 10f, -10f,
+//            10f, -10f, -10f,
+//            -10f, -10f, -10f,
+//            -10f, -10f, -10f,
+//            -10f, 10f, 10f,
+//            -10f, 10f, -10f,
+//            10f, -10f, 10f,
+//            -10f, -10f, 10f,
+//            -10f, -10f, -10f,
+//            -10f, 10f, 10f,
+//            -10f, -10f, 10f,
+//            10f, -10f, 10f,
+//            10f, 10f, 10f,
+//            10f, -10f, -10f,
+//            10f, 10f, -10f,
+//            10f, -10f, -10f,
+//            10f, 10f, 10f,
+//            10f, -10f, 10f,
+//            10f, 10f, 10f,
+//            10f, 10f, -10f,
+//            -10f, 10f, -10f,
+//            10f, 10f, 10f,
+//            -10f, 10f, -10f,
+//            -10f, 10f, 10f,
+//            10f, 10f, 10f,
+//            -10f, 10f, 10f,
+//            10f, -10f, 10f
+//        ), 200f
+//    )
 
-    //        MarchingCubeTerrain(floatArrayOf(
-//        -10f,-10f,-10f, // triangle 1 : begin
-//        -10f,-10f, 10f,
-//        -10f, 10f, 10f, // triangle 1 : end
-//        10f, 10f,-10f, // triangle 2 : begin
-//        -10f,-10f,-10f,
-//        -10f, 10f,-10f, // triangle 2 : end
-//        10f,-10f, 10f,
-//        -10f,-10f,-10f,
-//        10f,-10f,-10f,
-//        10f, 10f,-10f,
-//        10f,-10f,-10f,
-//        -10f,-10f,-10f,
-//        -10f,-10f,-10f,
-//        -10f, 10f, 10f,
-//        -10f, 10f,-10f,
-//        10f,-10f, 10f,
-//        -10f,-10f, 10f,
-//        -10f,-10f,-10f,
-//        -10f, 10f, 10f,
-//        -10f,-10f, 10f,
-//        10f,-10f, 10f,
-//        10f, 10f, 10f,
-//        10f,-10f,-10f,
-//        10f, 10f,-10f,
-//        10f,-10f,-10f,
-//        10f, 10f, 10f,
-//        10f,-10f, 10f,
-//        10f, 10f, 10f,
-//        10f, 10f,-10f,
-//        -10f, 10f,-10f,
-//        10f, 10f, 10f,
-//        -10f, 10f,-10f,
-//        -10f, 10f, 10f,
-//        10f, 10f, 10f,
-//        -10f, 10f, 10f,
-//        10f,-10f, 10f
-//    ),200f)
     init {
-        val config = DefaultShader.Config()
-        config.defaultCullFace = GL20.GL_NONE
-        val provider = DefaultShaderProvider(config)
+        // Added by suggestion of JamesTKhan as a troubleshooting measure.
+//        val config = DefaultShader.Config()
+//        config.defaultCullFace = GL20.GL_NONE
+//        val provider = DefaultShaderProvider(config)
 
         sceneManager.addScene(Scene(terrain.modelInstance))
     }

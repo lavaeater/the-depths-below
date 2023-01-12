@@ -2,17 +2,12 @@ package depth.injection
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.NinePatch
-import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import depth.voxel.DeepGameSettings
-import eater.core.GameSettings
 import eater.injection.InjectionContext.Companion.inject
 import ktx.assets.DisposableContainer
 import ktx.assets.DisposableRegistry
 import ktx.assets.disposeSafely
 import ktx.assets.toInternalFile
-import ktx.scene2d.Scene2DSkin
 import net.mgsx.gltf.loaders.gltf.GLTFLoader
 
 fun assets(): Assets {
@@ -35,6 +30,10 @@ class Assets(private val gameSettings: DeepGameSettings) : DisposableRegistry by
 
     val coralTexture = Texture("coral.png".toInternalFile())
     val submarine by lazy { GLTFLoader().load(Gdx.files.internal("hovercraft.gltf")) }
+
+    val diffuseTexture = Texture("textures/red_bricks_04_diff_1k.jpg".toInternalFile(), true)
+    val normalTexture = Texture("textures/red_bricks_04_nor_gl_1k.jpg".toInternalFile(), true)
+    val mrTexture = Texture("textures/red_bricks_04_rough_1k.jpg".toInternalFile(), true)
 
 //    val terrainSprite = Sprite(Texture("terrain/terrain.png".toInternalFile()))
 //    val deerSprite = Sprite(Texture("deer.png".toInternalFile())).apply {

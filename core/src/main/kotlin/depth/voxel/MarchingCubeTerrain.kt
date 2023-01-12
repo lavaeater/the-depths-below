@@ -1,12 +1,15 @@
 package depth.voxel
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.VertexAttribute
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
+import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.badlogic.gdx.math.MathUtils.*
 import com.badlogic.gdx.math.Vector3
 import com.sudoplay.joise.mapping.IMappingUpdateListener
@@ -16,9 +19,17 @@ import com.sudoplay.joise.mapping.MappingRange
 import com.sudoplay.joise.module.ModuleAutoCorrect
 import com.sudoplay.joise.module.ModuleBasisFunction
 import com.sudoplay.joise.module.ModuleScaleDomain
+import depth.injection.assets
 import depth.marching.MarchingCubesTables
+import ktx.assets.disposeSafely
 import ktx.log.info
+import ktx.math.minus
+import ktx.math.times
 import ktx.math.vec3
+import net.mgsx.gltf.loaders.shared.geometry.MeshTangentSpaceGenerator
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
+
 
 object Joiser {
 
@@ -99,6 +110,18 @@ object Joiser {
         return floatArray
     }
 }
+
+data class MarchingTriangle(
+    val cubeX: Int,
+    val y: Int,
+    val z: Int,
+    val v1: Vector3 = vec3(),
+    val v2: Vector3 = vec3(),
+    val v3: Vector3 = vec3(),
+    val n1: Vector3 = vec3(),
+    val n2: Vector3 = vec3(),
+    val n3: Vector3 = vec3()
+)
 
 fun getIndex(x: Int, y: Int, z: Int, size: Int): Int {
     return x + (size * (y + size * z))
@@ -195,7 +218,7 @@ fun generateMarchingCubeTerrain(cubesPerSide: Int, sideLength: Float): MarchingC
                 var marchingCubeIndex = 0
                 for ((index, vertVal) in vertValues.withIndex()) {
                     marchingCubeIndex =
-                        if (vertVal > 65000f) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
+                        if (vertVal < 55000f) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
                 }
                 // Now get that cube!
                 val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
@@ -242,47 +265,91 @@ fun generateMarchingCubeTerrain(cubesPerSide: Int, sideLength: Float): MarchingC
 
 
 open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : Terrain(size) {
+    val colors = listOf(Color.BLUE, Color.RED, Color.YELLOW, Color.GREEN, Color.CORAL)
+
     init {
         /*
         or
                 VertexAttributes.Usage.Normal.toLong() or
                 VertexAttributes.Usage.ColorUnpacked.toLong() or
                 VertexAttributes.Usage.TextureCoordinates.toLong()
+                 or
+                VertexAttributes.Usage.TextureCoordinates.toLong()
          */
         val meshBuilder = MeshBuilder()
-        meshBuilder.begin(
-            VertexAttributes.Usage.Position.toLong() or
-                VertexAttributes.Usage.Normal.toLong() or
-                VertexAttributes.Usage.ColorUnpacked.toLong() or
-                VertexAttributes.Usage.TextureCoordinates.toLong(), GL20.GL_TRIANGLES
+        val attributes = VertexAttributes(
+            VertexAttribute.Position(),
+            VertexAttribute.Normal(),
+//            VertexAttribute(VertexAttributes.Usage.Tangent, 4, ShaderProgram.TANGENT_ATTRIBUTE),
+//            VertexAttribute.TexCoords(0)
         )
+        meshBuilder.begin(attributes, GL20.GL_TRIANGLES)
+
 
 //        meshBuilder.part("Entire thing", GL20.GL_TRIANGLES)
+        val color = Color(0.3f, 0.6f, 0.3f, 1f)
         for (i in vertices.indices.step(9)) {
-            meshBuilder.triangle(
-                vec3(
-                    vertices[i],
-                    vertices[i + 1],
-                    vertices[i + 2]
-                ),
-                vec3(
-                    vertices[i + 3],
-                    vertices[i + 4],
-                    vertices[i + 5]
-                ),
-                vec3(
-                    vertices[i + 6],
-                    vertices[i + 7],
-                    vertices[i + 8]
-                ),
+            val vn1 = vec3(
+                vertices[i],
+                vertices[i + 1],
+                vertices[i + 2]
             )
+            val vn2 = vec3(
+                vertices[i + 3],
+                vertices[i + 4],
+                vertices[i + 5]
+            )
+            val vn3 = vec3(
+                vertices[i + 6],
+                vertices[i + 7],
+                vertices[i + 8]
+            )
+
+            val u = vn2 - vn1
+            val v = vn3 - vn1
+
+
+            val normal = vec3().apply {
+                x = -(u.y * v.z - u.z * v.y)
+                y = -(u.z * v.x - u.x * v.z)
+                z = -(u.x * v.y - u.y * v.x)
+            }.nor().scl(-1f)
+
+            val v0 = VertexInfo()
+                .setPos(
+                    vn1
+                )
+                .setNor(normal)
+            val v1 = VertexInfo()
+                .setPos(
+                    vn2
+                )
+                .setNor(normal)
+            val v2 = VertexInfo()
+                .setPos(
+                    vn3
+                )
+                .setNor(normal)
+            meshBuilder.triangle(v0, v1, v2)
         }
 
         val mesh = meshBuilder.end()
+        val material = Material().apply {
+            set(PBRColorAttribute.createBaseColorFactor(color))
+////            set(PBRColorAttribute.createEmissive(Color.RED))
+//            set(PBRTextureAttribute.createBaseColorTexture(assets().diffuseTexture));
+//            set(PBRTextureAttribute.createNormalTexture(assets().normalTexture));
+//            set(PBRTextureAttribute.createMetallicRoughnessTexture(assets().mrTexture));
+        }
         val mb = ModelBuilder()
         mb.begin()
-        mb.part("terrain", mesh, GL20.GL_TRIANGLES, Material())
-        modelInstance = ModelInstance(mb.end()).apply { transform.setToWorld(Vector3.Zero, Vector3.X, Vector3.Y) }
+        mb.part("terrain", mesh, GL20.GL_TRIANGLES, material)
+        val model = mb.end()
+//        for (mesh in model.meshes) {
+////            MeshTangentSpaceGenerator.computeTangentSpace(mesh, material, false, true)
+//        }
+
+        modelInstance = ModelInstance(model).apply { transform.setToWorld(Vector3.Zero, Vector3.X, Vector3.Y) }
     }
 
     override fun dispose() {

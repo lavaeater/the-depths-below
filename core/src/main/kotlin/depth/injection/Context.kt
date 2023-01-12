@@ -7,12 +7,10 @@ import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
-import com.badlogic.gdx.graphics.g3d.environment.PointLight
-import com.badlogic.gdx.graphics.g3d.environment.SpotLight
+import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.RenderSystem3d
-import depth.ecs.systems.UpdateSpotLightSystem
+import depth.ecs.systems.UpdatePointLightSystem
 import depth.voxel.BlockManager
 import depth.voxel.DeepGameSettings
 import eater.core.MainGame
@@ -20,11 +18,10 @@ import eater.ecs.ashley.systems.RemoveEntitySystem
 import eater.injection.InjectionContext
 import ktx.assets.disposeSafely
 import ktx.math.vec3
-import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
-import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
+import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight
 import net.mgsx.gltf.scene3d.lights.PointLightEx
-import net.mgsx.gltf.scene3d.lights.SpotLightEx
 import net.mgsx.gltf.scene3d.scene.SceneManager
+import net.mgsx.gltf.scene3d.shaders.PBREmissiveShaderProvider
 import net.mgsx.gltf.scene3d.utils.EnvironmentUtil
 
 
@@ -47,8 +44,9 @@ object Context : InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 67f
-                position.set(vec3(0f, 8f * 25f, 0f))
-                lookAt(vec3(8f * 25f, 0f, 8f * 25f))
+                position.set(vec3(0f, 100f, 0f))
+//                lookAt(Vector3.Zero)
+                lookAt(vec3(50f, 100f, -50f))
                 near = 1f
                 far = 3000f
             })
@@ -84,18 +82,27 @@ object Context : InjectionContext() {
 
 //        sceneManager.setAmbientLight(1f)
 
+//        sceneManager.setShaderProvider(
+//            PBREmissiveShaderProvider(PBREmissiveShaderProvider.createConfig(0)))
         sceneManager.environment.apply {
-            set(ColorAttribute(ColorAttribute.AmbientLight, 0.01f, 0.01f, 0.6f, 1f))
-            add(DirectionalLight().apply {
-                set(0.1f, 0.1f, 0.8f, -1f, -0.8f, -0.2f)
+            set(ColorAttribute(ColorAttribute.AmbientLight, .1f, .1f, .1f, 1f))
+            add(DirectionalShadowLight().apply {
+                set(1f, 1f, 1f, -1f, -1f, 0f)
             })
-            add(DirectionalLight().apply {
-                set(0.2f, 0.1f, 0.8f, 1f, 0.8f, 0.2f)
+            add(DirectionalShadowLight().apply {
+                set(1f, 1f, 1f, 1f, 0f, -1f)
             })
+
+//            add(DirectionalLight().apply {
+//                set(0.5f, 0.5f, 0.5f, 0f, 0.5f, -1f)
+//            })
+//            add(DirectionalLight().apply {
+//                set(0.5f, 0.5f, 0.8f, 1f, 0.8f, 0.2f)
+//            })
         }
-        sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
-        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
-        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap))
+//        sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
+//        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
+//        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap))
 
         // setup skybox
 
@@ -108,12 +115,12 @@ object Context : InjectionContext() {
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
-            addSystem(UpdateSpotLightSystem(PointLightEx().apply {
-                setColor(Color.WHITE)
-                setIntensity(10000f)
+            addSystem(UpdatePointLightSystem(PointLightEx().apply {
+                setColor(Color.GREEN)
+                setIntensity(100000f)
                 inject<SceneManager>().environment.add(this)
             }, inject()))
-            addSystem(RenderSystem3d(inject(), inject(), inject()))
+            addSystem(RenderSystem3d(inject()))
         }
     }
 }
