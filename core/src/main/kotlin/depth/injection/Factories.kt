@@ -26,7 +26,7 @@ fun createSubMarine() {
         }
         with<Transform3d>()
         with<Camera3dFollowComponent> {
-            offset.set(15f, 25f, 0f)
+            offset.set(5f, 2.5f, 0f)
         }
         with<KeyboardControlComponent>()
     }

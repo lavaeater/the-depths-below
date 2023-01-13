@@ -74,7 +74,7 @@ object Context : InjectionContext() {
         }
         val environmentCubemap = EnvironmentUtil.createCubemap(
             InternalFileHandleResolver(),
-            "textures/environment/environment_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
+            "textures/interstellar_skybox/interstellar_", ".png", EnvironmentUtil.FACE_NAMES_NEG_POS
         )
         val diffuseCubemap = EnvironmentUtil.createCubemap(
             InternalFileHandleResolver(),
@@ -116,8 +116,8 @@ object Context : InjectionContext() {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
             addSystem(UpdatePointLightSystem(PointLightEx().apply {
-                setColor(Color.GREEN)
-                setIntensity(100000f)
+                setColor(Color(.5f, .5f, 1f, 1f))
+                setIntensity(10000f)
                 inject<SceneManager>().environment.add(this)
             }, inject()))
             addSystem(UpdateTransformSystem())
