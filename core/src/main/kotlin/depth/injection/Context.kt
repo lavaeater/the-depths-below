@@ -141,6 +141,7 @@ object Context : InjectionContext() {
             }, inject()))
             addSystem(UpdateTransformSystem())
             addSystem(UpdatePerspectiveCameraSystem(inject()))
+            addSystem(BulletUpdateSystem(inject()))
             addSystem(SubmarineControlSystem().apply {
                 Gdx.input.inputProcessor = this
             })

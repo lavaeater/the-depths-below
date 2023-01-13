@@ -23,11 +23,11 @@ class UpdatePerspectiveCameraSystem(
         val offset = Camera3dFollowComponent.get(entity).offset
         val backwards = tf.forward.cpy().rotate(Vector3.Y, 180f).scl(offset.x).add(0f, offset.y,0f)
         val target = position + backwards
-        perspectiveCamera.position.set(target)
+        perspectiveCamera.position.lerp(target, 0.1f)
         val cameraDirection = ((position + tf.forward.cpy().scl(10f)) - perspectiveCamera.position).nor()
 
 
-        perspectiveCamera.direction.set(cameraDirection)
+        perspectiveCamera.direction.lerp(cameraDirection, 0.1f)
         perspectiveCamera.update()
     }
 }

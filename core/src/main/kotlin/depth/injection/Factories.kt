@@ -23,6 +23,8 @@ fun createSubMarine() {
         )
     }
 
+    submarineScene.modelInstance.nodes
+
     val compound = btCompoundShape(true, 2).apply {
         addChildShape(Matrix4().setTranslation(0f,0f,0f), btCylinderShape(vec3(2.5f, 2.5f, 8.0f)))
         addChildShape(Matrix4().setTranslation(0f,0f,0f), btBoxShape(vec3(0.5f,1.5f,1.5f)))

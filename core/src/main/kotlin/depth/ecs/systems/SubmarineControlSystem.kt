@@ -76,39 +76,36 @@ class SubmarineControlSystem :
         return controlMap.execute(keycode, KeyPress.Up)
     }
 
-    val validDirections = listOf(Direction.Up, Direction.Down, Direction.Forward, Direction.Reverse)
-    val validRotations = listOf(Rotation.YawLeft, Rotation.YawRight)
-
     override fun processEntity(entity: Entity, deltaTime: Float) {
-        val sc = SceneComponent.get(entity).scene
-        val tf = Transform3d.get(entity)
-        val position = tf.position
-
-        if (controlComponent.has(Rotation.YawLeft)) {
-            tf.forward.rotate(Vector3.Y, speed * deltaTime)
-            sc.modelInstance.transform.rotate(Vector3.Y, speed * deltaTime)
-        }
-
-        if (controlComponent.has(Rotation.YawRight)) {
-            tf.forward.rotate(Vector3.Y, -speed * deltaTime)
-            sc.modelInstance.transform.rotate(Vector3.Y, -speed * deltaTime)
-        }
-
-        val targetPosition = position.cpy()
-        if (controlComponent.has(Direction.Up)) {
-            targetPosition.add(0f, speed * deltaTime, 0f)
-        }
-        if (controlComponent.has(Direction.Down)) {
-            targetPosition.add(0f, -speed * deltaTime, 0f)
-        }
-        if (controlComponent.has(Direction.Forward)) {
-            targetPosition.add(tf.forward * (speed * deltaTime))
-        }
-        if (controlComponent.has(Direction.Reverse)) {
-            targetPosition.add(tf.forward * (-speed * deltaTime))
-        }
-
-
-        sc.modelInstance.transform.setTranslation(targetPosition)
+//        val sc = SceneComponent.get(entity).scene
+//        val tf = Transform3d.get(entity)
+//        val position = tf.position
+//
+//        if (controlComponent.has(Rotation.YawLeft)) {
+//            tf.forward.rotate(Vector3.Y, speed * deltaTime)
+//            sc.modelInstance.transform.rotate(Vector3.Y, speed * deltaTime)
+//        }
+//
+//        if (controlComponent.has(Rotation.YawRight)) {
+//            tf.forward.rotate(Vector3.Y, -speed * deltaTime)
+//            sc.modelInstance.transform.rotate(Vector3.Y, -speed * deltaTime)
+//        }
+//
+//        val targetPosition = position.cpy()
+//        if (controlComponent.has(Direction.Up)) {
+//            targetPosition.add(0f, speed * deltaTime, 0f)
+//        }
+//        if (controlComponent.has(Direction.Down)) {
+//            targetPosition.add(0f, -speed * deltaTime, 0f)
+//        }
+//        if (controlComponent.has(Direction.Forward)) {
+//            targetPosition.add(tf.forward * (speed * deltaTime))
+//        }
+//        if (controlComponent.has(Direction.Reverse)) {
+//            targetPosition.add(tf.forward * (-speed * deltaTime))
+//        }
+//
+//
+//        sc.modelInstance.transform.setTranslation(targetPosition)
     }
 }
