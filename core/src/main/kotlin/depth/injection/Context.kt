@@ -12,6 +12,7 @@ import com.badlogic.gdx.physics.bullet.DebugDrawer
 import com.badlogic.gdx.physics.bullet.collision.*
 import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld
+import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw
 import com.badlogic.gdx.physics.bullet.softbody.btSoftRigidDynamicsWorld
@@ -120,10 +121,10 @@ object Context : InjectionContext() {
     fun setupBullet(context: Context) {
         context.apply {
             bindSingleton<btCollisionConfiguration>(btDefaultCollisionConfiguration())
-            bindSingleton(btCollisionDispatcher(inject()))
+            bindSingleton<btDispatcher>(btCollisionDispatcher(inject()))
             bindSingleton<btBroadphaseInterface>(btDbvtBroadphase())
             bindSingleton<btConstraintSolver>(btSequentialImpulseConstraintSolver())
-            bindSingleton<btCollisionWorld>(btSoftRigidDynamicsWorld(inject(), inject(), inject(), inject()).apply {
+            bindSingleton<btDynamicsWorld>(btSoftRigidDynamicsWorld(inject(), inject(), inject(), inject()).apply {
                 gravity = vec3(0f, -9.81f, 0f)
             })
 
@@ -144,7 +145,7 @@ object Context : InjectionContext() {
                 Gdx.input.inputProcessor = this
             })
             addSystem(RenderSystem3d(inject()))
-            addSystem(DebugRenderSystem3d(inject(), inject()))
+            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
     }
 }

@@ -1,8 +1,6 @@
 package depth.core
 
-import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
-import com.badlogic.gdx.graphics.PerspectiveCamera
+import com.badlogic.gdx.physics.bullet.Bullet
 import depth.injection.Context
 import eater.core.MainGame
 import eater.injection.InjectionContext.Companion.inject
@@ -25,6 +23,7 @@ class TheDepthsBelow : MainGame() {
     }
 
     override fun create() {
+        Bullet.init()
         Context.initialize(this)
         addScreen(GameScreen(this, inject(), inject()))
         setScreen<GameScreen>()
