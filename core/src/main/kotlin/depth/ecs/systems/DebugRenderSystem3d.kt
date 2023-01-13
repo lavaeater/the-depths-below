@@ -1,8 +1,21 @@
 package depth.ecs.systems
 
 import com.badlogic.ashley.core.EntitySystem
-import net.mgsx.gltf.scene3d.scene.SceneManager
+import com.badlogic.gdx.physics.bullet.DebugDrawer
+import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw
+import com.badlogic.gdx.physics.bullet.softbody.btSoftRigidDynamicsWorld
+import com.badlogic.gdx.utils.viewport.Viewport
 
-class DebugRenderSystem3d(private val sceneManager: SceneManager): EntitySystem() {
+class DebugRenderSystem3d(private val viewport: Viewport, private val dynamicsWorld: btSoftRigidDynamicsWorld): EntitySystem() {
+    val debugDrawer = DebugDrawer().apply {
+        debugMode = btIDebugDraw.DebugDrawModes.DBG_DrawWireframe
+        (dynamicsWorld as btDiscreteDynamicsWorld).debugDrawer = this
+    }
+    override fun update(deltaTime: Float) {
+        debugDrawer.begin(viewport)
+        dynamicsWorld!!.debugDrawWorld()
+        debugDrawer.end()
+    }
 
 }

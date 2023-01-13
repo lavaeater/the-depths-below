@@ -9,6 +9,14 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader
 import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.physics.bullet.DebugDrawer
+import com.badlogic.gdx.physics.bullet.collision.btCollisionDispatcher
+import com.badlogic.gdx.physics.bullet.collision.btDbvtBroadphase
+import com.badlogic.gdx.physics.bullet.collision.btDefaultCollisionConfiguration
+import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld
+import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw
+import com.badlogic.gdx.physics.bullet.softbody.btSoftRigidDynamicsWorld
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.*
 import depth.voxel.BlockManager
@@ -64,6 +72,7 @@ object Context : InjectionContext() {
                 )
             )
             bindSingleton(createSceneManager(inject()))
+            bindSingleton(setupBullet())
             bindSingleton(getEngine(gameSettings, false))
         }
     }
@@ -110,6 +119,25 @@ object Context : InjectionContext() {
         val skybox = SceneSkybox(environmentCubemap)
         sceneManager.skyBox = skybox
         return sceneManager
+    }
+
+    fun setupBullet(): btSoftRigidDynamicsWorld {
+            collisionConfig = btDefaultCollisionConfiguration()
+            dispatcher = btCollisionDispatcher(collisionConfig)
+            broadphase = btDbvtBroadphase()
+            //setting the dynamic world
+            constraintSolver = btSequentialImpulseConstraintSolver()
+            dynamicsWorld =
+                btSoftRigidDynamicsWorld(dispatcher, broadphase, constraintSolver, collisionConfig)
+            dynamicsWorld!!.gravity = Vector3(0f, -9.81f, 0f)
+
+            //contactListener = MyContactListener()
+
+            debugDrawer = DebugDrawer().apply {
+                debugMode = btIDebugDraw.DebugDrawModes.DBG_DrawWireframe
+            }
+            (dynamicsWorld as btDiscreteDynamicsWorld).debugDrawer = debugDrawer
+        return dynamicsWorld
     }
 
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
