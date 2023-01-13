@@ -7,12 +7,10 @@ import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.graphics.g3d.shaders.DepthShader
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.physics.bullet.DebugDrawer
-import com.badlogic.gdx.physics.bullet.collision.btCollisionDispatcher
-import com.badlogic.gdx.physics.bullet.collision.btDbvtBroadphase
-import com.badlogic.gdx.physics.bullet.collision.btDefaultCollisionConfiguration
+import com.badlogic.gdx.physics.bullet.collision.*
+import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw
@@ -25,6 +23,8 @@ import eater.core.MainGame
 import eater.ecs.ashley.systems.RemoveEntitySystem
 import eater.injection.InjectionContext
 import ktx.assets.disposeSafely
+import ktx.inject.Context
+import ktx.inject.register
 import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
@@ -32,10 +32,6 @@ import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight
 import net.mgsx.gltf.scene3d.lights.PointLightEx
 import net.mgsx.gltf.scene3d.scene.SceneManager
 import net.mgsx.gltf.scene3d.scene.SceneSkybox
-import net.mgsx.gltf.scene3d.shaders.PBRDepthShader
-import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider
-import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider.createDefaultConfig
-import net.mgsx.gltf.scene3d.shaders.PBREmissiveShaderProvider
 import net.mgsx.gltf.scene3d.utils.EnvironmentUtil
 
 
@@ -72,7 +68,7 @@ object Context : InjectionContext() {
                 )
             )
             bindSingleton(createSceneManager(inject()))
-            bindSingleton(setupBullet())
+            setupBullet(this)
             bindSingleton(getEngine(gameSettings, false))
         }
     }
@@ -121,23 +117,17 @@ object Context : InjectionContext() {
         return sceneManager
     }
 
-    fun setupBullet(): btSoftRigidDynamicsWorld {
-            collisionConfig = btDefaultCollisionConfiguration()
-            dispatcher = btCollisionDispatcher(collisionConfig)
-            broadphase = btDbvtBroadphase()
-            //setting the dynamic world
-            constraintSolver = btSequentialImpulseConstraintSolver()
-            dynamicsWorld =
-                btSoftRigidDynamicsWorld(dispatcher, broadphase, constraintSolver, collisionConfig)
-            dynamicsWorld!!.gravity = Vector3(0f, -9.81f, 0f)
+    fun setupBullet(context: Context) {
+        context.apply {
+            bindSingleton<btCollisionConfiguration>(btDefaultCollisionConfiguration())
+            bindSingleton(btCollisionDispatcher(inject()))
+            bindSingleton<btBroadphaseInterface>(btDbvtBroadphase())
+            bindSingleton<btConstraintSolver>(btSequentialImpulseConstraintSolver())
+            bindSingleton<btCollisionWorld>(btSoftRigidDynamicsWorld(inject(), inject(), inject(), inject()).apply {
+                gravity = vec3(0f, -9.81f, 0f)
+            })
 
-            //contactListener = MyContactListener()
-
-            debugDrawer = DebugDrawer().apply {
-                debugMode = btIDebugDraw.DebugDrawModes.DBG_DrawWireframe
-            }
-            (dynamicsWorld as btDiscreteDynamicsWorld).debugDrawer = debugDrawer
-        return dynamicsWorld
+        }
     }
 
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
@@ -154,6 +144,7 @@ object Context : InjectionContext() {
                 Gdx.input.inputProcessor = this
             })
             addSystem(RenderSystem3d(inject()))
+            addSystem(DebugRenderSystem3d(inject(), inject()))
         }
     }
 }
