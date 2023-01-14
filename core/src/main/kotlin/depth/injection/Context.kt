@@ -125,7 +125,7 @@ object Context : InjectionContext() {
             bindSingleton<btBroadphaseInterface>(btDbvtBroadphase())
             bindSingleton<btConstraintSolver>(btSequentialImpulseConstraintSolver())
             bindSingleton<btDynamicsWorld>(btSoftRigidDynamicsWorld(inject(), inject(), inject(), inject()).apply {
-                gravity = vec3(0f, -9.81f, 0f)
+                gravity = vec3(0f, 0f, 0f)
             })
 
         }
@@ -145,7 +145,7 @@ object Context : InjectionContext() {
             addSystem(SubmarineControlSystem().apply {
                 Gdx.input.inputProcessor = this
             })
-            addSystem(RenderSystem3d(inject()))
+            addSystem(RenderSystem3d(inject(), inject()))
             addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
     }
