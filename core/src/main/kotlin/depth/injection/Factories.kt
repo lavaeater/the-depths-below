@@ -26,11 +26,8 @@ fun createSubMarine() {
         )
     }
 
-    submarineScene.modelInstance.nodes
-
     val compound = btCompoundShape(true, 2).apply {
         addChildShape(Matrix4().rotate(Quaternion().setEulerAngles(90f, 90f, 0f)).setTranslation(-0.2f,.75f,0f), btCylinderShape(vec3(0.6f, 1f, 1f)))
-//        addChildShape(Matrix4().setTranslation(0f,1f,0f), btBoxShape(vec3(0.5f,1.5f,1.5f)))
     }
 
     val motionState = MotionState(submarineScene.modelInstance.transform)

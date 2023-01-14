@@ -1,27 +1,15 @@
 package depth.ecs.systems
 
 import com.badlogic.ashley.core.EntitySystem
-import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.Mesh
-import com.badlogic.gdx.graphics.VertexAttribute
-import com.badlogic.gdx.graphics.VertexAttributes
-import com.badlogic.gdx.graphics.g3d.Material
-import com.badlogic.gdx.graphics.g3d.Model
-import com.badlogic.gdx.graphics.g3d.model.data.ModelData
-import com.badlogic.gdx.graphics.g3d.model.data.ModelMesh
-import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder
-import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.physics.bullet.Bullet
-import com.badlogic.gdx.physics.bullet.collision.btBvhTriangleMeshShape
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody
+import depth.ecs.components.MotionState
 import depth.voxel.generateMarchingCubeTerrain
-import ktx.math.vec3
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
-import kotlin.math.min
 
 
 fun <E> MutableSet<E>.addIndexed(element: E): Int {
@@ -131,8 +119,9 @@ class RenderSystem3d(
 //        mb.part("collsionreef", shape, GL20.GL_TRIANGLES, Material())
 //        val model = mb.end()
         val cShape: btCollisionShape = Bullet.obtainStaticNodeShape(terrain.modelInstance.model.nodes)
-        val info = btRigidBody.btRigidBodyConstructionInfo(0f, null, cShape, Vector3.Zero)
-        
+        val motionState = MotionState(terrain.modelInstance.transform)
+        val info = btRigidBody.btRigidBodyConstructionInfo(0f, motionState, cShape, Vector3.Zero)
+
         world.addRigidBody(btRigidBody(info))
     }
 
