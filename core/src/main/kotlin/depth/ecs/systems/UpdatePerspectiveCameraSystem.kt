@@ -26,7 +26,6 @@ class UpdatePerspectiveCameraSystem(
         perspectiveCamera.position.lerp(target, 0.1f)
         val cameraDirection = ((position + tf.forward.cpy().scl(10f)) - perspectiveCamera.position).nor()
 
-
         perspectiveCamera.direction.lerp(cameraDirection, 0.1f)
         perspectiveCamera.update()
     }
