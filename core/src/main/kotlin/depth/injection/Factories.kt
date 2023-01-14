@@ -1,6 +1,7 @@
 package depth.injection
 
 import com.badlogic.gdx.math.Matrix4
+import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.physics.bullet.Bullet
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape
@@ -28,12 +29,10 @@ fun createSubMarine() {
     submarineScene.modelInstance.nodes
 
     val compound = btCompoundShape(true, 2).apply {
-        addChildShape(Matrix4().setTranslation(0f,0f,0f), btCylinderShape(vec3(2.5f, 2.5f, 8.0f)))
+        addChildShape(Matrix4().rotate(Quaternion().setEulerAngles(90f, 90f, 0f)).setTranslation(0f,0f,0f), btCylinderShape(vec3(0.5f, 1f, 0.5f)))
         addChildShape(Matrix4().setTranslation(0f,0f,0f), btBoxShape(vec3(0.5f,1.5f,1.5f)))
     }
 
-    Bullet.
-    btConvexHullShape(submarineScene.)
     val motionState = MotionState(submarineScene.modelInstance.transform)
     val info = btRigidBody.btRigidBodyConstructionInfo(10f, motionState, compound, Vector3.Zero)
     val submarineBody = btRigidBody(info)
