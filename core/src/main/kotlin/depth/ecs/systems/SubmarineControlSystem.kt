@@ -39,7 +39,7 @@ class SubmarineControlSystem :
         setBoth(
             Keys.S,
             "Throttle R",
-            { controlComponent.remove(Direction.Neutral) },
+            { controlComponent.remove(Direction.Reverse) },
             { controlComponent.add(Direction.Reverse) }
         )
         setBoth(
@@ -76,36 +76,34 @@ class SubmarineControlSystem :
         return controlMap.execute(keycode, KeyPress.Up)
     }
 
+    private val forceFactor = 10f
+    private val torqueFactor = 100000f
+
     override fun processEntity(entity: Entity, deltaTime: Float) {
-//        val sc = SceneComponent.get(entity).scene
-//        val tf = Transform3d.get(entity)
-//        val position = tf.position
-//
-//        if (controlComponent.has(Rotation.YawLeft)) {
-//            tf.forward.rotate(Vector3.Y, speed * deltaTime)
-//            sc.modelInstance.transform.rotate(Vector3.Y, speed * deltaTime)
-//        }
-//
-//        if (controlComponent.has(Rotation.YawRight)) {
-//            tf.forward.rotate(Vector3.Y, -speed * deltaTime)
-//            sc.modelInstance.transform.rotate(Vector3.Y, -speed * deltaTime)
-//        }
-//
-//        val targetPosition = position.cpy()
-//        if (controlComponent.has(Direction.Up)) {
+        val rigidBody = BulletRigidBody.get(entity).rigidBody
+
+        if (controlComponent.has(Rotation.YawLeft)) {
+            rigidBody.applyTorqueImpulse(vec3(-torqueFactor,0f,torqueFactor))
+        }
+
+        if (controlComponent.has(Rotation.YawRight)) {
+            rigidBody.applyTorqueImpulse(vec3(torqueFactor,torqueFactor,0f))
+        }
+
+        val centralForce = vec3()
+        if (controlComponent.has(Direction.Up)) {
+            centralForce.set(centralForce.x, forceFactor, centralForce.z)
 //            targetPosition.add(0f, speed * deltaTime, 0f)
-//        }
-//        if (controlComponent.has(Direction.Down)) {
-//            targetPosition.add(0f, -speed * deltaTime, 0f)
-//        }
-//        if (controlComponent.has(Direction.Forward)) {
-//            targetPosition.add(tf.forward * (speed * deltaTime))
-//        }
-//        if (controlComponent.has(Direction.Reverse)) {
-//            targetPosition.add(tf.forward * (-speed * deltaTime))
-//        }
-//
-//
-//        sc.modelInstance.transform.setTranslation(targetPosition)
+        }
+        if (controlComponent.has(Direction.Down)) {
+            centralForce.set(centralForce.x, forceFactor, centralForce.z)
+        }
+        if (controlComponent.has(Direction.Forward)) {
+            centralForce.set(centralForce.x, centralForce.y, forceFactor)
+        }
+        if (controlComponent.has(Direction.Reverse)) {
+            centralForce.set(centralForce.x, centralForce.y, -forceFactor)
+        }
+        rigidBody.applyCentralImpulse(centralForce)
     }
 }

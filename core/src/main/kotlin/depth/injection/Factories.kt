@@ -34,6 +34,7 @@ fun createSubMarine() {
     val info = btRigidBody.btRigidBodyConstructionInfo(10f, motionState, compound, Vector3.Zero)
     val submarineBody = btRigidBody(info)
     submarineBody.angularFactor = Vector3.Y
+    submarineBody.setDamping(0.5f, 0f)
     inject<btDynamicsWorld>().addRigidBody(submarineBody)
 
     engine().entity {
@@ -41,7 +42,6 @@ fun createSubMarine() {
             scene =submarineScene
             inject<SceneManager>().addScene(submarineScene)
         }
-        with<Transform3d>()
         with<Camera3dFollowComponent> {
             offset.set(5f, 2.5f, 5f)
         }

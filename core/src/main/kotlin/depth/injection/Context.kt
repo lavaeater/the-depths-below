@@ -139,7 +139,6 @@ object Context : InjectionContext() {
                 setIntensity(10000f)
                 inject<SceneManager>().environment.add(this)
             }, inject()))
-            addSystem(UpdateTransformSystem())
             addSystem(UpdatePerspectiveCameraSystem(inject()))
             addSystem(BulletUpdateSystem(inject()))
             addSystem(SubmarineControlSystem().apply {
