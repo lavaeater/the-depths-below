@@ -77,17 +77,17 @@ class SubmarineControlSystem :
     }
 
     private val forceFactor = 10f
-    private val torqueFactor = 100000f
+    private val torqueFactor = 1f
 
     override fun processEntity(entity: Entity, deltaTime: Float) {
         val rigidBody = BulletRigidBody.get(entity).rigidBody
 
         if (controlComponent.has(Rotation.YawLeft)) {
-            rigidBody.applyTorqueImpulse(vec3(-torqueFactor,0f,torqueFactor))
+            rigidBody.applyTorqueImpulse(vec3(0f,-torqueFactor,0f))
         }
 
         if (controlComponent.has(Rotation.YawRight)) {
-            rigidBody.applyTorqueImpulse(vec3(torqueFactor,torqueFactor,0f))
+            rigidBody.applyTorqueImpulse(vec3(0f,torqueFactor,0f))
         }
 
         val centralForce = vec3()
@@ -96,7 +96,7 @@ class SubmarineControlSystem :
 //            targetPosition.add(0f, speed * deltaTime, 0f)
         }
         if (controlComponent.has(Direction.Down)) {
-            centralForce.set(centralForce.x, forceFactor, centralForce.z)
+            centralForce.set(centralForce.x, -forceFactor, centralForce.z)
         }
         if (controlComponent.has(Direction.Forward)) {
             centralForce.set(centralForce.x, centralForce.y, forceFactor)

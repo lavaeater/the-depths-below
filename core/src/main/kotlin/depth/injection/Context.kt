@@ -145,7 +145,7 @@ object Context : InjectionContext() {
                 Gdx.input.inputProcessor = this
             })
             addSystem(RenderSystem3d(inject(), inject()))
-            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
+//            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
     }
 }

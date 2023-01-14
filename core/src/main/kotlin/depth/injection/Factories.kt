@@ -3,10 +3,7 @@ package depth.injection
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
-import com.badlogic.gdx.physics.bullet.Bullet
-import com.badlogic.gdx.physics.bullet.collision.btBoxShape
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape
-import com.badlogic.gdx.physics.bullet.collision.btConvexHullShape
 import com.badlogic.gdx.physics.bullet.collision.btCylinderShape
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody
@@ -26,16 +23,10 @@ fun createSubMarine() {
         )
     }
 
-    val compound = btCompoundShape(true, 2).apply {
+    val submarineShape = btCompoundShape(true, 2).apply {
         addChildShape(Matrix4().rotate(Quaternion().setEulerAngles(90f, 90f, 0f)).setTranslation(-0.2f,.75f,0f), btCylinderShape(vec3(0.6f, 1f, 1f)))
     }
-
-    val motionState = MotionState(submarineScene.modelInstance.transform)
-    val info = btRigidBody.btRigidBodyConstructionInfo(10f, motionState, compound, Vector3.Zero)
-    val submarineBody = btRigidBody(info)
-    submarineBody.angularFactor = Vector3.Y
-    submarineBody.setDamping(0.5f, 0f)
-    inject<btDynamicsWorld>().addRigidBody(submarineBody)
+    val localInertia = vec3()
 
     engine().entity {
         with<SceneComponent> {
@@ -46,8 +37,19 @@ fun createSubMarine() {
             offset.set(5f, 2.5f, 5f)
         }
         with<KeyboardControlComponent>()
+        lateinit var motionState: MotionState
+        with<MotionState> {
+            motionState = this
+            transform = submarineScene.modelInstance.transform
+        }
         with<BulletRigidBody> {
+            submarineShape.calculateLocalInertia(10f, localInertia)
+            val info = btRigidBody.btRigidBodyConstructionInfo(10f, motionState, submarineShape, localInertia)
+            val submarineBody = btRigidBody(info).apply {
+                setDamping(0.5f, 0.9f)
+            }
             rigidBody = submarineBody
+            inject<btDynamicsWorld>().addRigidBody(submarineBody)
         }
     }
 }

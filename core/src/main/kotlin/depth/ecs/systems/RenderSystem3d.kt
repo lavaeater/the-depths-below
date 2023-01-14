@@ -119,7 +119,9 @@ class RenderSystem3d(
 //        mb.part("collsionreef", shape, GL20.GL_TRIANGLES, Material())
 //        val model = mb.end()
         val cShape: btCollisionShape = Bullet.obtainStaticNodeShape(terrain.modelInstance.model.nodes)
-        val motionState = MotionState(terrain.modelInstance.transform)
+        val motionState = MotionState().apply {
+            transform = terrain.modelInstance.transform
+        }
         val info = btRigidBody.btRigidBodyConstructionInfo(0f, motionState, cShape, Vector3.Zero)
 
         world.addRigidBody(btRigidBody(info))
