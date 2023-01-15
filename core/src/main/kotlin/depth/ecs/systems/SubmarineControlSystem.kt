@@ -18,6 +18,7 @@ class SubmarineControlSystem :
     IteratingSystem(
         allOf(
             KeyboardControlComponent::class,
+            MotionState::class,
             SceneComponent::class
         ).get()
     ),
@@ -78,31 +79,34 @@ class SubmarineControlSystem :
 
     private val forceFactor = 10f
     private val torqueFactor = 1f
+    private val tmpVector = vec3()
 
     override fun processEntity(entity: Entity, deltaTime: Float) {
         val rigidBody = BulletRigidBody.get(entity).rigidBody
+        val motionState = MotionState.get(entity)
 
         if (controlComponent.has(Rotation.YawLeft)) {
-            rigidBody.applyTorqueImpulse(vec3(0f,-torqueFactor,0f))
+            rigidBody.applyTorqueImpulse(vec3(0f,torqueFactor,0f))
         }
 
         if (controlComponent.has(Rotation.YawRight)) {
-            rigidBody.applyTorqueImpulse(vec3(0f,torqueFactor,0f))
+            rigidBody.applyTorqueImpulse(vec3(0f,-torqueFactor,0f))
         }
 
         val centralForce = vec3()
         if (controlComponent.has(Direction.Up)) {
             centralForce.set(centralForce.x, forceFactor, centralForce.z)
-//            targetPosition.add(0f, speed * deltaTime, 0f)
         }
         if (controlComponent.has(Direction.Down)) {
             centralForce.set(centralForce.x, -forceFactor, centralForce.z)
         }
         if (controlComponent.has(Direction.Forward)) {
-            centralForce.set(centralForce.x, centralForce.y, forceFactor)
+            tmpVector.set(motionState.forward).scl(forceFactor)
+            centralForce.set(tmpVector.x, centralForce.y, tmpVector.z)
         }
         if (controlComponent.has(Direction.Reverse)) {
-            centralForce.set(centralForce.x, centralForce.y, -forceFactor)
+            tmpVector.set(motionState.backwards).scl(forceFactor)
+            centralForce.set(tmpVector.x, centralForce.y, tmpVector.z)
         }
         rigidBody.applyCentralImpulse(centralForce)
     }

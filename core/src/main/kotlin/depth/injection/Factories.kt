@@ -19,18 +19,21 @@ import net.mgsx.gltf.scene3d.scene.SceneManager
 fun createSubMarine() {
     val submarineScene = Scene(assets().submarine.scene).apply {
         this.modelInstance.transform.setToWorld(
-            vec3(50f, 100f, -50f), Vector3.X, Vector3.Y
+            vec3(50f, 100f, -50f), Vector3.Z, Vector3.Y
         )
     }
 
     val submarineShape = btCompoundShape(true, 2).apply {
-        addChildShape(Matrix4().rotate(Quaternion().setEulerAngles(90f, 90f, 0f)).setTranslation(-0.2f,.75f,0f), btCylinderShape(vec3(0.6f, 1f, 1f)))
+        addChildShape(
+            Matrix4().rotate(Quaternion().setEulerAngles(0f, 90f, 0f)).setTranslation(-0.2f, .75f, 0f),
+            btCylinderShape(vec3(0.6f, 1f, 1f))
+        )
     }
     val localInertia = vec3()
 
     engine().entity {
         with<SceneComponent> {
-            scene =submarineScene
+            scene = submarineScene
             inject<SceneManager>().addScene(submarineScene)
         }
         with<Camera3dFollowComponent> {
@@ -47,6 +50,7 @@ fun createSubMarine() {
             val info = btRigidBody.btRigidBodyConstructionInfo(10f, motionState, submarineShape, localInertia)
             val submarineBody = btRigidBody(info).apply {
                 setDamping(0.5f, 0.9f)
+                angularFactor = Vector3.Y
             }
             rigidBody = submarineBody
             inject<btDynamicsWorld>().addRigidBody(submarineBody)
