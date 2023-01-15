@@ -1,22 +1,5 @@
 package depth.marching
 
-object CubeMarcher {
-
-    /**
-     * Always start with the basics
-     * The basics are:
-     * 1 cube
-     * 8 values for the corners of that cube.
-     *
-     * Drawing a mesh based on that info
-     *
-     * I think we need to create a mesh first of all
-     */
-
-
-
-}
-
 internal object MarchingCubesTables {
     const val EDGE_BITS = 12
     val EDGE_TABLE = intArrayOf(
