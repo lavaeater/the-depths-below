@@ -14,13 +14,13 @@ fun getVertIndexProper(x: Int, y: Int, z: Int): Int {
     if (x == 0 && y == 0 && z == 0) {
         index = 0
     } else if (x == 1 && y == 0 && z == 0) {
-        index = 3
-    } else if (x == 1 && y == 1 && z == 0) {
-        index = 7
-    } else if (x == 1 && y == 1 && z == 1) {
-        index = 6
-    } else if (x == 1 && y == 0 && z == 1) {
         index = 2
+    } else if (x == 1 && y == 1 && z == 0) {
+        index = 6
+    } else if (x == 1 && y == 1 && z == 1) {
+        index = 7
+    } else if (x == 1 && y == 0 && z == 1) {
+        index = 3
     } else if (x == 0 && y == 1 && z == 1) {
         index = 5
     } else if (x == 0 && y == 0 && z == 1) {
