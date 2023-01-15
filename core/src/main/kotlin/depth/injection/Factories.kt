@@ -49,7 +49,7 @@ fun createSubMarine() {
             submarineShape.calculateLocalInertia(10f, localInertia)
             val info = btRigidBody.btRigidBodyConstructionInfo(10f, motionState, submarineShape, localInertia)
             val submarineBody = btRigidBody(info).apply {
-                setDamping(0.5f, 0.9f)
+                setDamping(0.5f, 0.5f)
                 angularFactor = Vector3.Y
             }
             rigidBody = submarineBody

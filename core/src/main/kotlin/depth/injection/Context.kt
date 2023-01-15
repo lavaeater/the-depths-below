@@ -14,6 +14,7 @@ import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSol
 import com.badlogic.gdx.physics.bullet.softbody.btSoftRigidDynamicsWorld
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.*
+import depth.marching.WorldManager
 import depth.voxel.BlockManager
 import depth.marching.BoxOfPoints
 import depth.core.DeepGameSettings
@@ -63,6 +64,9 @@ object Context : InjectionContext() {
             )
             bindSingleton(createSceneManager())
             setupBullet(this)
+            bindSingleton(WorldManager(inject(), inject()).apply {
+                generateChunks()
+            })
             bindSingleton(MarchingCubeBuilder(inject(), inject(), 10))
             bindSingleton(getEngine(gameSettings, false))
         }

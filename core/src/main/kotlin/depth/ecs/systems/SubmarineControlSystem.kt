@@ -28,7 +28,6 @@ class SubmarineControlSystem(
     private val controlledEntity get() = engine.getEntitiesFor(family).first()
 
     private val controlComponent get() = KeyboardControlComponent.get(controlledEntity)
-    private val speed = 50f
 
     private val controlMap = command("Controoool") {
         setUp(
@@ -161,7 +160,7 @@ class SubmarineControlSystem(
     }
 
     private val forceFactor = 10f
-    private val torqueFactor = 1f
+    private val torqueFactor = 0.1f
     private val tmpVector = vec3()
     private val centralForce = vec3()
 

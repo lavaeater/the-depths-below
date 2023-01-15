@@ -7,8 +7,8 @@ import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody
 import depth.ecs.components.MotionState
 import net.mgsx.gltf.scene3d.scene.Scene
 
-class MarchingChunk(val chunkX:Int, val chunkY: Int, val chunkZ: Int, val size: Int, val cubeSideLength: Float) {
-    val modelInstance: ModelInstance = generateMarchingCubeTerrain(size,cubeSideLength, chunkX, chunkY, chunkZ)
+class MarchingChunk(val chunkX: Int, val chunkY: Int, val chunkZ: Int, val size: Int, val cubeSideLength: Float) {
+    val modelInstance: ModelInstance = generateMarchingCubeTerrain(size, cubeSideLength, chunkX, chunkY, chunkZ)
     val scene = Scene(modelInstance)
     val collisionShape = Bullet.obtainStaticNodeShape(modelInstance.model.nodes)
     val motionState = MotionState().apply {
