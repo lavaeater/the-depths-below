@@ -12,7 +12,7 @@ import depth.voxel.pow
 
 object Joiser {
 
-    val noiser by lazy {
+    private val noiser by lazy {
         val basis = ModuleBasisFunction()
         basis.setType(ModuleBasisFunction.BasisType.SIMPLEX)
         basis.seed = 14 // always same values, good
@@ -63,31 +63,4 @@ object Joiser {
         return noiser.get(nx, ny, nz, nw, nu, nv).toFloat()
     }
 
-    fun get3dNoise(size: Int): FloatArray {
-        val floatArray = FloatArray(size.pow(3))
-        var minVal = 0f
-        var maxval = 0f
-        val basis = ModuleBasisFunction()
-        basis.setType(ModuleBasisFunction.BasisType.SIMPLEX)
-        basis.seed = (1..1000).random().toLong()
-
-        val correct = ModuleAutoCorrect()
-        correct.setSource(basis)
-        correct.calculateAll()
-
-        val scaleDomain = ModuleScaleDomain()
-        scaleDomain.setSource(correct)
-        val scale = 1.0
-        scaleDomain.setScaleX(scale)
-        scaleDomain.setScaleY(scale)
-        scaleDomain.setScaleZ(scale)
-        scaleDomain.setScaleU(scale)
-        scaleDomain.setScaleW(scale)
-        Mapping.map3D(
-            MappingMode.SEAMLESS_XYZ, size, size, size, scaleDomain, MappingRange.DEFAULT, { x, y, z, value ->
-                floatArray[getIndex(x, y, z, size)] = value.toFloat()
-            }, IMappingUpdateListener.NULL_LISTENER
-        )
-        return floatArray
-    }
 }

@@ -5,12 +5,26 @@ import depth.voxel.pow
 import ktx.log.info
 import ktx.math.vec3
 
-fun getIndex(x: Int, y: Int, z: Int, size: Int): Int {
-    return x + (size * (y + size * z))
-}
+/**    6_____7
+ *   / |     |
+ * 2___|_3   |
+ * |   4_____5
+ * |  /   | /
+ * 0/____1
+ *
+ *
+ * y     z
+ * |    /
+ * |  /
+ * |/______x
+ *
+ *
+ *
+ *
+ */
 
 fun getVertIndexProper(x: Int, y: Int, z: Int): Int {
-    var index = 0
+    var index = -1
     if (x == 0 && y == 0 && z == 0) {
         index = 0
     } else if (x == 1 && y == 0 && z == 0) {
