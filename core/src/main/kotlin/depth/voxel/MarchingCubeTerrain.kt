@@ -53,7 +53,7 @@ object Joiser {
         scaleDomain
     }
 
-    fun getValueFor(x: Int, y: Int, z: Int, width: Int = 10, height: Int = 10, depth: Int = 10, scale: Double): Float {
+    fun getValueFor(x: Int, y: Int, z: Int, width: Int = 10, height: Int = 10, depth: Int = 10): Float {
         val range = MappingRange.DEFAULT
         val dx = range.map1.x - range.map0.x
         val dy = range.loop1.y - range.loop0.y
@@ -206,8 +206,7 @@ fun generateMarchingCubeTerrain(cubesPerSide: Int, sideLength: Float): MarchingC
                                     z,
                                     totalPerSide,
                                     totalPerSide,
-                                    totalPerSide,
-                                    0.01
+                                    totalPerSide
                                 ) * 100000f * (1f + ((totalPerSide - y) / totalPerSide))
                             allVertVals.add(vertVal)
                             vertValues[vertIndex] = vertVal
