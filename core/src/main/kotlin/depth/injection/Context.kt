@@ -68,13 +68,13 @@ object Context : InjectionContext() {
                     inject<PerspectiveCamera>() as Camera
                 )
             )
-            bindSingleton(createSceneManager(inject()))
+            bindSingleton(createSceneManager())
             setupBullet(this)
             bindSingleton(getEngine(gameSettings, false))
         }
     }
 
-    fun createSceneManager(camera: PerspectiveCamera): SceneManager {
+    fun createSceneManager(): SceneManager {
         val sceneManager = SceneManager().apply {
             setCamera(inject<PerspectiveCamera>())
         }
@@ -91,11 +91,6 @@ object Context : InjectionContext() {
             "textures/specular/specular_", "_", ".png", 10, EnvironmentUtil.FACE_NAMES_NEG_POS
         )
         val brdfLUT = Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"))
-
-//        sceneManager.setAmbientLight(1f)
-
-//        sceneManager.setShaderProvider(
-//            PBRDepthShaderProvider(createDefaultConfig()))
 
         sceneManager.environment.apply {
             set(ColorAttribute(ColorAttribute.AmbientLight, .1f, .1f, .1f, 1f))
