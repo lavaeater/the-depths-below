@@ -129,16 +129,28 @@ object Context : InjectionContext() {
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
-            addSystem(UpdatePointLightSystem(PointLightEx().apply {
-                setColor(Color(.5f, .5f, 1f, 1f))
-                setIntensity(10000f)
-                inject<SceneManager>().environment.add(this)
-            }, inject()))
+//            addSystem(UpdatePointLightSystem(PointLightEx().apply {
+//                setColor(Color(.5f, .5f, 1f, 1f))
+//                setIntensity(10000f)
+//                inject<SceneManager>().environment.add(this)
+//            }, inject()))
             addSystem(UpdatePerspectiveCameraSystem(inject()))
             addSystem(BulletUpdateSystem(inject()))
-            addSystem(SubmarineControlSystem().apply {
-                Gdx.input.inputProcessor = this
-            })
+//            addSystem(SubmarineControlSystem().apply {
+//                Gdx.input.inputProcessor = this
+//            })
+            addSystem(
+                KeyboardControlSystem(
+                    BoxOfPoints(
+                        inject(),
+                        10
+                    ).apply {
+                        createPoints()
+                    },
+                    inject()
+                ).apply {
+                    Gdx.input.inputProcessor = this
+                })
             addSystem(RenderSystem3d(inject(), inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }

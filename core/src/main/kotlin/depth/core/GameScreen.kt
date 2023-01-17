@@ -15,9 +15,9 @@ class GameScreen(game: MainGame, engine: Engine, viewport: ExtendViewport
         super.show()
         if(needsInit) {
             needsInit = false
-            createSubMarine()
+            //createSubMarine()
         }
-        Gdx.input.inputProcessor = engine.getSystem<SubmarineControlSystem>()
+       // Gdx.input.inputProcessor = engine.getSystem<SubmarineControlSystem>()
     }
 
 

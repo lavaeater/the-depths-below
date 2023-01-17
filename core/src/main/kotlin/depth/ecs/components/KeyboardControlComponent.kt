@@ -5,25 +5,7 @@ import com.badlogic.ashley.core.Entity
 import com.badlogic.gdx.utils.Pool
 import ktx.ashley.mapperFor
 
-sealed class Direction {
-    object Left: Direction()
-    object Right: Direction()
-    object Up: Direction()
-    object Down: Direction()
-    object Forward: Direction()
-    object Reverse: Direction()
-    object Neutral: Direction()
-}
-sealed class Rotation {
-    object YawLeft: Rotation()
-    object YawRight: Rotation()
-    object PitchUp: Rotation()
-    object PitchDown: Rotation()
-    object RollLeft: Rotation()
-    object RollRight: Rotation()
-}
-
-class KeyboardControlComponent: Component, Pool.Poolable {
+class DirectionThing {
     val orthogonal = mutableSetOf<Direction>()
     val rotational = mutableSetOf<Rotation>()
 
@@ -49,8 +31,39 @@ class KeyboardControlComponent: Component, Pool.Poolable {
         rotational.remove(rotation)
     }
 
-    override fun reset() {
+    fun clear() {
+        rotational.clear()
+        orthogonal.clear()
+    }
+}
 
+class KeyboardControlComponent: Component, Pool.Poolable {
+
+    val directionThing = DirectionThing()
+    fun has(direction: Direction) : Boolean {
+        return directionThing.has(direction)
+    }
+
+    fun has(rotation: Rotation): Boolean {
+        return directionThing.has(rotation)
+    }
+
+    fun add(direction: Direction) {
+        directionThing.add(direction)
+    }
+    fun remove(direction: Direction) {
+        directionThing.remove(direction)
+    }
+
+    fun add(rotation: Rotation) {
+        directionThing.add(rotation)
+    }
+    fun remove(rotation: Rotation) {
+        directionThing.remove(rotation)
+    }
+
+    override fun reset() {
+        directionThing.clear()
     }
 
     companion object {

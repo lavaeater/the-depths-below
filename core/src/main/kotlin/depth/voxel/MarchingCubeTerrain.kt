@@ -44,7 +44,7 @@ object Joiser {
 
         val scaleDomain = ModuleScaleDomain()
         scaleDomain.setSource(correct)
-        val scale = 4.0
+        val scale = 32.0
         scaleDomain.setScaleX(scale)
         scaleDomain.setScaleY(scale)
         scaleDomain.setScaleZ(scale)
