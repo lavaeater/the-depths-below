@@ -1,5 +1,6 @@
 package depth.ecs.systems
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
@@ -11,30 +12,25 @@ import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
 
-data class PointCoord(val x: Int, val y: Int, val z:Int)
 
-class BoxOfPoints(private val sceneManager: SceneManager, val numberOfPoints: Int) {
+class BoxOfPoints(
+    private val sceneManager: SceneManager,
+    private val numberOfPoints: Int
+) {
+
 
     /**
      * This is where the confusion starts, right?
      */
-    val vertexIndexToPointCoordinate = mapOf(
-        0 to PointCoord(0, 0, 0),
-1 to PointCoord(1, 0, 0),
-2 to PointCoord(1, 0,1),
-3 to PointCoord(0, 0,1),
-4 to PointCoord(0, 1,0),
-5 to PointCoord(1, 1,0),
-6 to PointCoord(1, 1, 1),
-7 to PointCoord(0, 1, 1)
-    )
 
-    fun indexToCoordinate
 
     val boxPoints: List<BoxPoint> = Array(numberOfPoints) { x ->
         Array(numberOfPoints) { y ->
             Array(numberOfPoints) { z ->
-                BoxPoint(PointCoord(x, y, z), Joiser.getValueFor(x, y, z, numberOfPoints, numberOfPoints, numberOfPoints))
+                BoxPoint(
+                    PointCoord(x, y, z),
+                    Joiser.getValueFor(x, y, z, numberOfPoints, numberOfPoints, numberOfPoints)
+                )
             }
         }.flatten()
     }.flatMap { it.asIterable() }
@@ -55,28 +51,20 @@ class BoxOfPoints(private val sceneManager: SceneManager, val numberOfPoints: In
             sceneManager.addScene(
                 Scene(
                     mb.createSphere(
-                        5f, 5f, 5f, 4, 4, Material().apply {
-//                            set(
-//                                PBRColorAttribute.createBaseColorFactor(
-//                                    Color(
-//                                        boxPoint.isoValue,
-//                                        boxPoint.isoValue,
-//                                        boxPoint.isoValue,
-//                                        1f
-//                                    )
-//                                )
-//                            )
+                        5f,
+                        5f,
+                        5f,
+                        4,
+                        4,
+                        Material("cube").apply {
                             set(
                                 PBRColorAttribute.createEmissive(
-                                    boxPoint.isoValue,
-                                    boxPoint.isoValue,
-                                    boxPoint.isoValue,
-                                    1f
+                                    if (boxPoint.on) Color.GREEN else Color.BLUE
                                 )
                             )
                         },
                         VertexAttributes.Usage.Position.toLong() or
-                                VertexAttributes.Usage.Normal.toLong()
+                            VertexAttributes.Usage.Normal.toLong()
                     )
                 ).apply {
                     modelInstance.transform.setToWorld(
@@ -84,6 +72,8 @@ class BoxOfPoints(private val sceneManager: SceneManager, val numberOfPoints: In
                         Vector3.Z,
                         Vector3.Y
                     )
+                    boxPoint.scene = this
+                    boxPoint.modelInstance = this.modelInstance
                 })
         }
     }

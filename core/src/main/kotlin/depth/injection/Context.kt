@@ -143,7 +143,7 @@ object Context : InjectionContext() {
                 KeyboardControlSystem(
                     BoxOfPoints(
                         inject(),
-                        10
+                        4
                     ).apply {
                         createPoints()
                     },

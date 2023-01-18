@@ -1,27 +1,27 @@
 package depth.ecs.systems
 
-import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
-import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.Input.Keys
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.math.Vector3
 import depth.ecs.components.*
 import eater.input.KeyPress
 import eater.input.command
 import ktx.app.KtxInputAdapter
-import ktx.ashley.allOf
 import ktx.log.info
 import ktx.math.plus
-import ktx.math.times
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
 
 
 class KeyboardControlSystem(
     private val boxOfPoints: BoxOfPoints,
-    private val camera: PerspectiveCamera) :
+    private val camera: PerspectiveCamera
+) :
     EntitySystem(),
     KtxInputAdapter {
+    private var dTime = 0f
 
     private val controlComponent = DirectionThing()
 
@@ -30,15 +30,17 @@ class KeyboardControlSystem(
             Keys.W,
             "Throttle F"
         ) {
+            turnOffColors()
             currentPoint++
-            updateCameraPosition()
+            updateCameraPosition(dTime)
         }
         setUp(
             Keys.S,
             "Throttle R"
         ) {
+            turnOffColors()
             currentPoint--
-            updateCameraPosition()
+            updateCameraPosition(dTime)
         }
         setBoth(
             Keys.A,
@@ -89,26 +91,83 @@ class KeyboardControlSystem(
         if (controlComponent.has(Direction.Down)) {
         }
         if (controlComponent.has(Direction.Forward)) {
-            currentPoint++
-            updateCameraPosition()
         }
         if (controlComponent.has(Direction.Reverse)) {
-            currentPoint--
-            updateCameraPosition()
         }
     }
 
-    val offset = vec3(125f, 0f, 125f)
+    val offset = vec3(125f, 125f, 125f)
     val currentTarget = vec3()
 
-    private fun updateCameraPosition() {
+    fun turnOffColors() {
+        val currentBox = boxOfPoints.boxPoints[currentPoint]
+        for (vertIndex in 1..7) {
+            val otherBox = boxOfPoints
+                .boxPoints
+                .firstOrNull {
+                    it.coord == currentBox
+                        .coord
+                        .getCoordForVertex(vertIndex)
+                }
+            otherBox?.modelInstance?.getMaterial("cube")?.set(
+                PBRColorAttribute.createEmissive(
+                    if (otherBox.on)
+                        Color.GREEN else
+                        Color.BLUE
+                )
+            )
+        }
+
+        currentBox.modelInstance.getMaterial("cube")?.set(
+            PBRColorAttribute.createEmissive(
+                if (currentBox.on)
+                    Color.GREEN
+                else Color.BLUE
+            )
+        )
+    }
+
+    fun turnOnColors() {
+
+        val currentBox = boxOfPoints.boxPoints[currentPoint]
+        for (vertIndex in 1..7) {
+            val otherBox = boxOfPoints
+                .boxPoints
+                .firstOrNull {
+                    it.coord == currentBox
+                        .coord
+                        .getCoordForVertex(vertIndex)
+                }
+            otherBox?.modelInstance?.getMaterial("cube")?.set(
+                PBRColorAttribute.createEmissive(
+                    if (otherBox.on)
+                        Color.RED else
+                        Color.PINK
+                )
+            )
+        }
+
+        currentBox.modelInstance.getMaterial("cube")?.set(
+            PBRColorAttribute.createEmissive(
+                if (currentBox.on)
+                    Color.RED
+                else Color.PINK
+            )
+        )
+    }
+
+    private fun updateCameraPosition(deltaTime: Float) {
         info { "currentIndex = $currentPoint" }
-        if(currentPoint > boxOfPoints.boxPoints.lastIndex)
+
+        if (currentPoint > boxOfPoints.boxPoints.lastIndex)
             currentPoint = 0
-        if(currentPoint < 0)
+        if (currentPoint < 0)
             currentPoint = boxOfPoints.boxPoints.lastIndex
 
         info { "currentIndex = $currentPoint" }
+        turnOnColors()
+
+
         val currentBox = boxOfPoints.boxPoints[currentPoint]
         info { "Currentbox: $currentBox" }
         /**
@@ -122,7 +181,7 @@ class KeyboardControlSystem(
          *
          * But we shall start with just looking at this particular point.
          */
-        currentTarget.set(currentBox.x * 25f,currentBox.y * 25f,currentBox.z * 25f)
+        currentTarget.set(currentBox.x * 25f, currentBox.y * 25f, currentBox.z * 25f)
         camera.position.set(currentTarget + offset)
         camera.lookAt(currentTarget)
         camera.update()

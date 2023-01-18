@@ -1,0 +1,29 @@
+package depth.ecs.systems
+
+data class PointCoord(val x: Int, val y: Int, val z: Int) {
+    fun getCoordForVertex(vertexIndex: Int): PointCoord {
+        val offset = vertexIndexToPointCoordinate[vertexIndex]!!
+        return add(offset)
+    }
+
+    fun add(coord: PointCoord): PointCoord {
+        return PointCoord(
+            this.x + coord.x,
+            this.y + coord.y,
+            this.z + coord.z
+        )
+    }
+    companion object {
+        val vertexIndexToPointCoordinate = mapOf(
+            0 to PointCoord(0, 0, 0),
+            1 to PointCoord(1, 0, 0),
+            2 to PointCoord(1, 0, 1),
+            3 to PointCoord(0, 0, 1),
+            4 to PointCoord(0, 1, 0),
+            5 to PointCoord(1, 1, 0),
+            6 to PointCoord(1, 1, 1),
+            7 to PointCoord(0, 1, 1)
+        )
+
+    }
+}
