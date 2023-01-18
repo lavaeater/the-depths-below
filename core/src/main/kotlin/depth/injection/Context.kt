@@ -3,6 +3,7 @@ package depth.injection
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.TextureRegion
@@ -55,7 +56,7 @@ object Context : InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 67f
-                position.set(vec3(0f, 100f, 0f))
+                position.set(vec3(250f, 250f, 250f))
 //                lookAt(Vector3.Zero)
                 lookAt(vec3(50f, 100f, -50f))
                 near = 1f
@@ -69,6 +70,10 @@ object Context : InjectionContext() {
                 )
             )
             bindSingleton(createSceneManager())
+            bindSingleton(BoxOfPoints(
+                inject(),
+                4
+            ))
             setupBullet(this)
             bindSingleton(getEngine(gameSettings, false))
         }
@@ -129,28 +134,23 @@ object Context : InjectionContext() {
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
-//            addSystem(UpdatePointLightSystem(PointLightEx().apply {
-//                setColor(Color(.5f, .5f, 1f, 1f))
-//                setIntensity(10000f)
-//                inject<SceneManager>().environment.add(this)
-//            }, inject()))
+            addSystem(UpdatePointLightSystem(PointLightEx().apply {
+                setColor(Color(.5f, .5f, 1f, 1f))
+                setIntensity(10000f)
+                inject<SceneManager>().environment.add(this)
+            }, inject()))
             addSystem(UpdatePerspectiveCameraSystem(inject()))
             addSystem(BulletUpdateSystem(inject()))
-//            addSystem(SubmarineControlSystem().apply {
-//                Gdx.input.inputProcessor = this
-//            })
+            addSystem(SubmarineControlSystem(inject()).apply {
+                Gdx.input.inputProcessor = this
+            })
             addSystem(
                 KeyboardControlSystem(
-                    BoxOfPoints(
-                        inject(),
-                        10
-                    ).apply {
-                        createPoints()
-                    },
-                    inject()
-                ).apply {
-                    Gdx.input.inputProcessor = this
-                })
+                    inject(),
+                    inject(),
+                    true,
+                    true
+                ))
             addSystem(RenderSystem3d(inject(), inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }

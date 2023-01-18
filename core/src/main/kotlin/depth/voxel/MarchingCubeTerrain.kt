@@ -53,7 +53,7 @@ object Joiser {
         scaleDomain
     }
 
-    fun getValueFor(x: Int, y: Int, z: Int, width: Int = 10, height: Int = 10, depth: Int = 10): Float {
+    fun getValueFor(x: Int, y: Int, z: Int, width: Int = 100, height: Int = 100, depth: Int = 100): Float {
         val range = MappingRange.DEFAULT
         val dx = range.map1.x - range.map0.x
         val dy = range.loop1.y - range.loop0.y
@@ -354,7 +354,7 @@ open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : 
 //            MeshTangentSpaceGenerator.computeTangentSpace(mesh, material, false, true)
 //        }
 
-        modelInstance = ModelInstance(model).apply { transform.setToWorld(Vector3.Zero, Vector3.X, Vector3.Y) }
+        modelInstance = ModelInstance(model)//.apply { transform.setToWorld(Vector3.Zero, Vector3.X, Vector3.Y) }
     }
 
     override fun dispose() {

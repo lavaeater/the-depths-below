@@ -14,7 +14,9 @@ import ktx.math.times
 import ktx.math.vec3
 
 
-class SubmarineControlSystem :
+class SubmarineControlSystem(
+    private val boxOfPoints: BoxOfPoints
+) :
     IteratingSystem(
         allOf(
             KeyboardControlComponent::class,
@@ -67,6 +69,10 @@ class SubmarineControlSystem :
             { controlComponent.remove(Direction.Down) },
             { controlComponent.add(Direction.Down) }
         )
+        setUp(
+            Keys.P,"Toggle points") {
+         boxOfPoints.togglePoints()
+        }
     }
 
     override fun keyDown(keycode: Int): Boolean {
@@ -86,11 +92,11 @@ class SubmarineControlSystem :
         val motionState = MotionState.get(entity)
 
         if (controlComponent.has(Rotation.YawLeft)) {
-            rigidBody.applyTorqueImpulse(vec3(0f,torqueFactor,0f))
+            rigidBody.applyTorqueImpulse(vec3(0f, torqueFactor, 0f))
         }
 
         if (controlComponent.has(Rotation.YawRight)) {
-            rigidBody.applyTorqueImpulse(vec3(0f,-torqueFactor,0f))
+            rigidBody.applyTorqueImpulse(vec3(0f, -torqueFactor, 0f))
         }
 
         val centralForce = vec3()
