@@ -11,22 +11,30 @@ import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
 
-class Cube()
-class BoxOfPoints(private val sceneManager: SceneManager, val numberOfPoints: Int) {
-    init {
-        val numberOfPoints = 100
-        for (x in 0 until numberOfPoints)
-            for (y in 0 until numberOfPoints)
-                for (z in 0 until numberOfPoints) {
+data class PointCoord(val x: Int, val y: Int, val z:Int)
 
-                }
-        val joiser = Joiser
-    }
+class BoxOfPoints(private val sceneManager: SceneManager, val numberOfPoints: Int) {
+
+    /**
+     * This is where the confusion starts, right?
+     */
+    val vertexIndexToPointCoordinate = mapOf(
+        0 to PointCoord(0, 0, 0),
+1 to PointCoord(1, 0, 0),
+2 to PointCoord(1, 0,1),
+3 to PointCoord(0, 0,1),
+4 to PointCoord(0, 1,0),
+5 to PointCoord(1, 1,0),
+6 to PointCoord(1, 1, 1),
+7 to PointCoord(0, 1, 1)
+    )
+
+    fun indexToCoordinate
 
     val boxPoints: List<BoxPoint> = Array(numberOfPoints) { x ->
         Array(numberOfPoints) { y ->
             Array(numberOfPoints) { z ->
-                BoxPoint(x, y, z, Joiser.getValueFor(x, y, z, numberOfPoints, numberOfPoints, numberOfPoints))
+                BoxPoint(PointCoord(x, y, z), Joiser.getValueFor(x, y, z, numberOfPoints, numberOfPoints, numberOfPoints))
             }
         }.flatten()
     }.flatMap { it.asIterable() }
