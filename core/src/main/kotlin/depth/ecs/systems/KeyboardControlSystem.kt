@@ -225,4 +225,10 @@ class KeyboardControlSystem(
         camera.lookAt(currentTarget)
         camera.update()
     }
+
+    private fun updatedModel() {
+        /**
+         * This is where the fun begins, I guess.
+         */
+    }
 }
