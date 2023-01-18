@@ -1,5 +1,7 @@
 package depth.ecs.systems
 
+import java.awt.Point
+
 data class PointCoord(val x: Int, val y: Int, val z: Int) {
     fun getCoordForVertex(vertexIndex: Int): PointCoord {
         val offset = vertexIndexToPointCoordinate[vertexIndex]!!
@@ -13,6 +15,15 @@ data class PointCoord(val x: Int, val y: Int, val z: Int) {
             this.z + coord.z
         )
     }
+
+    fun add(x: Int, y: Int, z: Int): PointCoord {
+        return PointCoord(
+            this.x + x,
+            this.y + y,
+            this.z + z
+        )
+    }
+
     companion object {
         val vertexIndexToPointCoordinate = mapOf(
             0 to PointCoord(0, 0, 0),

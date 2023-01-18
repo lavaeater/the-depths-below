@@ -113,7 +113,7 @@ object Context : InjectionContext() {
         return sceneManager
     }
 
-    fun setupBullet(context: Context) {
+    private fun setupBullet(context: Context) {
         context.apply {
             bindSingleton<btCollisionConfiguration>(btDefaultCollisionConfiguration())
             bindSingleton<btDispatcher>(btCollisionDispatcher(inject()))
@@ -143,7 +143,7 @@ object Context : InjectionContext() {
                 KeyboardControlSystem(
                     BoxOfPoints(
                         inject(),
-                        4
+                        10
                     ).apply {
                         createPoints()
                     },
