@@ -24,20 +24,39 @@ class BoxOfPoints(
      */
 
 
-    val boxPoints: List<BoxPoint> = Array(numberOfPoints) { x ->
-        Array(numberOfPoints) { y ->
-            Array(numberOfPoints) { z ->
-                BoxPoint(
-                    PointCoord(x, y, z),
-                    Joiser.getValueFor(x, y, z)
-                )
-            }
-        }.flatten()
-    }.flatMap { it.asIterable() }
+    val boxPoints: List<BoxPoint> = getBoxPointsOnlyCentral()
+
+    private fun getBoxPointsOnlyCentral(): List<BoxPoint> {
+        return Array(numberOfPoints) { x ->
+            Array(numberOfPoints) { y ->
+                Array(numberOfPoints) { z ->
+                    val isoValue =
+                        if (x in 2 until numberOfPoints - 1 && y in 2 until numberOfPoints - 1 && z in 2 until numberOfPoints - 1) 0.2f else 1.0f
+                    BoxPoint(
+                        PointCoord(x, y, z),
+                        isoValue
+                    )
+                }
+            }.flatten()
+        }.flatMap { it.asIterable() }
+    }
+
+    private fun getBoxPointsFromNoise(): List<BoxPoint> {
+        return Array(numberOfPoints) { x ->
+            Array(numberOfPoints) { y ->
+                Array(numberOfPoints) { z ->
+                    BoxPoint(
+                        PointCoord(x, y, z),
+                        Joiser.getValueFor(x, y, z)
+                    )
+                }
+            }.flatten()
+        }.flatMap { it.asIterable() }
+    }
 
     var needsPoints = true
     fun createPoints() {
-        if(needsPoints) {
+        if (needsPoints) {
             var max = Float.MIN_VALUE
             var min = Float.MAX_VALUE
             val mb = ModelBuilder()
@@ -80,13 +99,13 @@ class BoxOfPoints(
             }
             needsPoints = false
         } else {
-            for(bp in boxPoints)
+            for (bp in boxPoints)
                 sceneManager.addScene(bp.scene)
         }
     }
 
     fun destroyPoints() {
-        for(bp in boxPoints) {
+        for (bp in boxPoints) {
             sceneManager.removeScene(bp.scene)
         }
     }
@@ -94,7 +113,7 @@ class BoxOfPoints(
     var pointsVisible = true
     fun togglePoints() {
         pointsVisible = !pointsVisible
-        if(pointsVisible)
+        if (pointsVisible)
             createPoints()
         else
             destroyPoints()

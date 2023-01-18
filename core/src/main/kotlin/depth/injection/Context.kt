@@ -56,9 +56,9 @@ object Context : InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 67f
-                position.set(vec3(250f, 250f, 250f))
-//                lookAt(Vector3.Zero)
-                lookAt(vec3(50f, 100f, -50f))
+//                position.set(vec3(250f, 250f, 250f))
+////                lookAt(Vector3.Zero)
+//                lookAt(vec3(50f, 100f, -50f))
                 near = 1f
                 far = 3000f
             })
@@ -72,7 +72,7 @@ object Context : InjectionContext() {
             bindSingleton(createSceneManager())
             bindSingleton(BoxOfPoints(
                 inject(),
-                4
+                5
             ))
             setupBullet(this)
             bindSingleton(getEngine(gameSettings, false))

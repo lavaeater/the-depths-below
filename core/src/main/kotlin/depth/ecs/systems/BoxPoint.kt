@@ -10,5 +10,6 @@ data class BoxPoint(val coord: PointCoord, val isoValue: Float) {
     lateinit var scene: Scene
     lateinit var modelInstance: ModelInstance
     val on: Boolean get() = isoValue < 0.55f
+    var actualOn = false
 
 }

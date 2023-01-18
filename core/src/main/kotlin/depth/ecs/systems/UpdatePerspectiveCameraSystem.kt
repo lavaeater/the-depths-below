@@ -18,7 +18,6 @@ class UpdatePerspectiveCameraSystem(
     IteratingSystem(
         allOf(
             MotionState::class,
-            BulletRigidBody::class,
             Camera3dFollowComponent::class
         ).get()
     ) {
@@ -27,17 +26,33 @@ class UpdatePerspectiveCameraSystem(
     val cameraDirection = vec3()
     val tmpVector = vec3()
     override fun processEntity(entity: Entity, deltaTime: Float) {
-        val bulletRigidBody = BulletRigidBody.get(entity)
         val motionState = MotionState.get(entity)
 
         val position = motionState.position
         val cc = Camera3dFollowComponent.get(entity)
         val offset = cc.offset
-        target.set(position).add(tmpVector.set(motionState.backwards).scl(offset.x).add(offset.y))
+        tmpVector
+            .set(motionState.backwards)
+            .scl(offset.x)
+            .add(0f,offset.y, 0f)
+        target.set(
+            position
+                .cpy()
+                .add(tmpVector)
+        )
+        tmpVector.setZero()
+        tmpVector
+            .set(motionState.forward)
+            .scl(10f)
         perspectiveCamera.position.lerp(target, 0.8f)
-        cameraDirection.set(position).add(tmpVector.set(motionState.forward).scl(10f)).sub(perspectiveCamera.position).nor()
+        cameraDirection.set(
+            position
+                .cpy()
+                .add(tmpVector)
+        )
 
-        perspectiveCamera.direction.lerp(cameraDirection, 0.5f)
+        perspectiveCamera.lookAt(cameraDirection)
+        perspectiveCamera.up.set(Vector3.Y)
         perspectiveCamera.update()
     }
 }

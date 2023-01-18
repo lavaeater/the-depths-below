@@ -48,14 +48,14 @@ class SubmarineControlSystem(
         setBoth(
             Keys.A,
             "Left",
-            { controlComponent.remove(Rotation.YawLeft) },
-            { controlComponent.add(Rotation.YawLeft) }
+            { controlComponent.remove(Direction.Left) },
+            { controlComponent.add(Direction.Left) }
         )
         setBoth(
             Keys.D,
             "Right",
-            { controlComponent.remove(Rotation.YawRight) },
-            { controlComponent.add(Rotation.YawRight) }
+            { controlComponent.remove(Direction.Right) },
+            { controlComponent.add(Direction.Right) }
         )
         setBoth(
             Keys.UP,
@@ -68,6 +68,18 @@ class SubmarineControlSystem(
             "Down",
             { controlComponent.remove(Direction.Down) },
             { controlComponent.add(Direction.Down) }
+        )
+        setBoth(
+            Keys.LEFT,
+            "Up",
+            { controlComponent.remove(Rotation.YawLeft) },
+            { controlComponent.add(Rotation.YawLeft) }
+        )
+        setBoth(
+            Keys.RIGHT,
+            "Down",
+            { controlComponent.remove(Rotation.YawRight) },
+            { controlComponent.add(Rotation.YawRight) }
         )
         setUp(
             Keys.P,"Toggle points") {
@@ -86,6 +98,7 @@ class SubmarineControlSystem(
     private val forceFactor = 10f
     private val torqueFactor = 1f
     private val tmpVector = vec3()
+    private val centralForce = vec3()
 
     override fun processEntity(entity: Entity, deltaTime: Float) {
         val rigidBody = BulletRigidBody.get(entity).rigidBody
@@ -99,20 +112,36 @@ class SubmarineControlSystem(
             rigidBody.applyTorqueImpulse(vec3(0f, -torqueFactor, 0f))
         }
 
-        val centralForce = vec3()
+        centralForce.setZero()
+        if (controlComponent.has(Direction.Left)) {
+            tmpVector.setZero()
+            tmpVector.set(motionState.right).scl(forceFactor)
+            centralForce.add(tmpVector)
+        }
+        if (controlComponent.has(Direction.Right)) {
+            tmpVector.setZero()
+            tmpVector.set(motionState.left).scl(forceFactor)
+            centralForce.add(tmpVector)
+        }
         if (controlComponent.has(Direction.Up)) {
-            centralForce.set(centralForce.x, forceFactor, centralForce.z)
+            tmpVector.setZero()
+            tmpVector.set(motionState.up).scl(forceFactor)
+            centralForce.add(tmpVector)
         }
         if (controlComponent.has(Direction.Down)) {
-            centralForce.set(centralForce.x, -forceFactor, centralForce.z)
+            tmpVector.setZero()
+            tmpVector.set(motionState.down).scl(forceFactor)
+            centralForce.add(tmpVector)
         }
         if (controlComponent.has(Direction.Forward)) {
+            tmpVector.setZero()
             tmpVector.set(motionState.forward).scl(forceFactor)
-            centralForce.set(tmpVector.x, centralForce.y, tmpVector.z)
+            centralForce.add(tmpVector)
         }
         if (controlComponent.has(Direction.Reverse)) {
+            tmpVector.setZero()
             tmpVector.set(motionState.backwards).scl(forceFactor)
-            centralForce.set(tmpVector.x, centralForce.y, tmpVector.z)
+            centralForce.add(tmpVector)
         }
         rigidBody.applyCentralImpulse(centralForce)
     }
