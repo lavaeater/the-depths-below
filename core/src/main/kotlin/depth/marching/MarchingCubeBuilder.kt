@@ -1,4 +1,4 @@
-package depth.ecs.systems
+package depth.marching
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g3d.Model
@@ -8,10 +8,10 @@ import com.badlogic.gdx.physics.bullet.Bullet
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody
+import depth.core.DeepGameSettings
 import depth.ecs.components.MotionState
-import depth.marching.*
-import depth.marching.MarchingCubesTables
 import depth.voxel.pow
+import eater.core.GameSettings
 import ktx.log.info
 import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
@@ -22,17 +22,18 @@ class MarchingCubeBuilder(
     private val sceneManager: SceneManager,
     private val dynamicsWorld: btDynamicsWorld,
     val numberOfPoints: Int,
+    private val gameSettings: DeepGameSettings,
     private var started: Boolean = true,
     private val useCooldown: Boolean = false,
     private val useUnlimitedNoise: Boolean = true,
     private val interactive: Boolean = false,
-    private val useNoise: Boolean = true,
+    useNoise: Boolean = true,
     private val useBox: Boolean = false
 ) {
     private var needsPoints = true
     private var currentCubeIndex = 0
     private val hasPoints get() = !needsPoints
-    private val sideLength = 25f
+    private val sideLength = gameSettings.sideLength
     private val green = Color(0f, 1f, 0f, 0.5f)
     private val blue = Color(0f, 0f, 1f, 0.5f)
     private val coolDown = 0.05f
@@ -170,7 +171,7 @@ class MarchingCubeBuilder(
                     vertexIndex to actualPoint!!.on
                 } else {
                     val isoValue = Joiser.getValueFor(newCoord.x, newCoord.y, newCoord.z)
-                    vertexIndex to (isoValue * 100000f < 55000f)
+                    vertexIndex to ((isoValue * 100000f) < 55000f)
 //                    * (1f + ((maxWorldSize - newCoord.y) / maxWorldSize))
                 }
             }.toMap()
@@ -414,7 +415,12 @@ class MarchingCubeBuilder(
         }
         info { "Chunk is DONE!" }
         val terrain = MarchingCubeTerrain(localTriangles.toTypedArray().toFloatArray(), 1f)
-        return MarchingChunk(chunkX, chunkY, chunkZ, terrain.modelInstance)
+        return MarchingChunk(chunkX, chunkY, chunkZ).apply {
+            modelInstance = terrain.modelInstance
+            cubes = numberOfPoints
+            sideLength = sideLength
+
+        }
     }
 
     fun move(x: Int, y: Int, z: Int) {

@@ -16,8 +16,8 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.*
 import depth.marching.WorldManager
 import depth.voxel.BlockManager
-import depth.marching.BoxOfPoints
 import depth.core.DeepGameSettings
+import depth.marching.MarchingCubeBuilder
 import eater.core.MainGame
 import eater.ecs.ashley.systems.RemoveEntitySystem
 import eater.injection.InjectionContext
@@ -27,7 +27,6 @@ import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight
-import net.mgsx.gltf.scene3d.lights.PointLightEx
 import net.mgsx.gltf.scene3d.scene.SceneManager
 import net.mgsx.gltf.scene3d.scene.SceneSkybox
 import net.mgsx.gltf.scene3d.utils.EnvironmentUtil
@@ -64,7 +63,7 @@ object Context : InjectionContext() {
             )
             bindSingleton(createSceneManager())
             setupBullet(this)
-            bindSingleton(MarchingCubeBuilder(inject(), inject(), 10))
+            bindSingleton(MarchingCubeBuilder(inject(), inject(), 10, inject()))
             bindSingleton(WorldManager(inject(), inject(), inject()).apply {
                 generateChunks(5)
             })
@@ -134,6 +133,7 @@ object Context : InjectionContext() {
                 Gdx.input.inputProcessor = this
             })
             addSystem(RenderSystem3d(inject()))
+//            addSystem(UpdateChunkSystem(inject(), inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
     }

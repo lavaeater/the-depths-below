@@ -2,13 +2,15 @@ package depth.ecs.systems
 
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.gdx.Input.Keys
+import depth.marching.MarchingCubeBuilder
 import eater.input.KeyPress
 import eater.input.command
 import ktx.app.KtxInputAdapter
 import ktx.math.vec3
 
 class KeyboardControlSystem(
-    private val marchingCubeBuilder: MarchingCubeBuilder) :
+    private val marchingCubeBuilder: MarchingCubeBuilder
+) :
     EntitySystem(),
     KtxInputAdapter {
 
