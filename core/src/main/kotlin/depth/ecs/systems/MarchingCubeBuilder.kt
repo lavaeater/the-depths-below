@@ -12,22 +12,20 @@ import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
+import java.awt.Point
 
 class MarchingCubeBuilder(
     private val sceneManager: SceneManager,
     private val dynamicsWorld: btDynamicsWorld,
-    numberOfPoints: Int,
-    maxWorldSize: Int = 1000,
+    private val numberOfPoints: Int,
+    private val maxWorldSize: Int = 1000,
     private var started: Boolean = true,
     private val useCooldown: Boolean = false,
     private val useUnlimitedNoise: Boolean = true,
     private val interactive: Boolean = false,
-        private val useNoise: Boolean = true
+    private val useNoise: Boolean = true,
+    private val useBox: Boolean = false
 ) {
-    init {
-//        Joiser.numberOfPoints = maxWorldSize
-    }
-
     private var needsPoints = true
     private var currentCubeIndex = 0
     private val hasPoints get() = !needsPoints
@@ -43,7 +41,14 @@ class MarchingCubeBuilder(
     private lateinit var modelInstance: ModelInstance
     private lateinit var scene: Scene
 
-    private var boxOfPoints = BoxOfPoints(sceneManager, numberOfPoints, 0, 0, 0, useNoise)
+    private var boxOfPoints = if (useBox) BoxOfPoints(sceneManager, numberOfPoints, 0, 0, 0, useNoise) else BoxOfPoints(
+        sceneManager,
+        0,
+        0,
+        0,
+        0,
+        useNoise
+    )
 
 
     fun toggleStarted() {
@@ -61,10 +66,12 @@ class MarchingCubeBuilder(
     }
 
     fun fixCubeIndex() {
-        if (currentCubeIndex > boxOfPoints.boxPoints.lastIndex)
-            currentCubeIndex = 0
-        if (currentCubeIndex < 0)
-            currentCubeIndex = boxOfPoints.boxPoints.lastIndex
+        if (useBox) {
+            if (currentCubeIndex > boxOfPoints.boxPoints.lastIndex)
+                currentCubeIndex = 0
+            if (currentCubeIndex < 0)
+                currentCubeIndex = boxOfPoints.boxPoints.lastIndex
+        }
     }
 
     fun indexUp() {
@@ -81,7 +88,7 @@ class MarchingCubeBuilder(
 
 
     private fun turnColorsOff() {
-        if (hasPoints) {
+        if (hasPoints && useBox) {
             val currentBox = boxOfPoints.boxPoints[currentCubeIndex]
             for (vertIndex in 1..7) {
                 val otherBox = boxOfPoints
@@ -111,7 +118,7 @@ class MarchingCubeBuilder(
     }
 
     private fun turnOnColors() {
-        if (hasPoints) {
+        if (hasPoints && useBox) {
 
             val currentBox = boxOfPoints.boxPoints[currentCubeIndex]
             for (vertIndex in 1..7) {
@@ -145,6 +152,27 @@ class MarchingCubeBuilder(
         return if (useUnlimitedNoise)
             (0..7).map { vertexIndex ->
                 val newCoord = coord.coordForIndex(vertexIndex)
+                if (useBox) {
+                    var actualPoint = boxOfPoints.boxPoints.firstOrNull { it.coord == newCoord }
+                    if (actualPoint == null) {
+                        actualPoint = BoxPoint(
+                            newCoord,
+                            Joiser.getValueFor(
+                                newCoord.x,
+                                newCoord.y,
+                                newCoord.z
+                            )
+                        )
+                    }
+                    vertexIndex to actualPoint!!.on
+                } else {
+                    val isoValue = Joiser.getValueFor(newCoord.x, newCoord.y, newCoord.z)
+                    vertexIndex to (isoValue * 100000f * (1f + ((maxWorldSize - newCoord.y) / maxWorldSize)) < 55000f)
+                }
+            }.toMap()
+        else
+            (0..7).map { vertexIndex ->
+                val newCoord = coord.coordForIndex(vertexIndex)
                 var actualPoint = boxOfPoints.boxPoints.firstOrNull { it.coord == newCoord }
                 if (actualPoint == null) {
                     actualPoint = BoxPoint(
@@ -152,43 +180,33 @@ class MarchingCubeBuilder(
                         1.0f
                     )
                 }
-                vertexIndex to actualPoint.on
-            }.toMap() else
-            (0..7).map { vertexIndex ->
-                val newCoord = coord.coordForIndex(vertexIndex)
-                var actualPoint = boxOfPoints.boxPoints.firstOrNull { it.coord == newCoord }
-                if (actualPoint == null) {
-                    actualPoint = BoxPoint(
-                        newCoord,
-                        Joiser.getValueFor(
-                            newCoord.x,
-                            newCoord.y,
-                            newCoord.z
-                        )
-                    )
-                }
                 vertexIndex to actualPoint!!.on
             }.toMap()
+
     }
 
     fun update(deltaTime: Float) {
         if (started) {
-            if (createPoints) {
-                createPoints = false
-                togglePoints()
-            }
-            if (useCooldown) {
-                acc += deltaTime
-                if (acc > coolDown) {
-                    acc = 0f
+            if (useBox) {
+                if (createPoints) {
+                    createPoints = false
+                    togglePoints()
+                }
+                if (useCooldown) {
+                    acc += deltaTime
+                    if (acc > coolDown) {
+                        acc = 0f
+                        updateModel()
+                        indexUp()
+                        turnOnColors()
+                    }
+                } else {
                     updateModel()
                     indexUp()
                     turnOnColors()
                 }
             } else {
                 updateModel()
-                indexUp()
-                turnOnColors()
             }
         }
     }
@@ -196,80 +214,74 @@ class MarchingCubeBuilder(
     private var hasRun = false
 
     fun updateModel() {
-
-        if (hasRun && interactive) {
-            sceneManager.removeScene(scene)
-        }
-        /**
-         * This is where the fun begins, I guess.
-         *
-         * Every point is actually the basis of a unique cube, so that's cool.
-         *
-         * Let's try and create the triangles for the current cube we are currently checking out.
-         */
-        cubesInModel.add(currentCubeIndex)
-        val currentCube = boxOfPoints.boxPoints[currentCubeIndex]
-        val currentCoord = currentCube.coord
-
-//
-            info { "Current Index: $currentCubeIndex" }
-//            info { "Current coord: $currentCoord" }
-
-        val vertValues = getOnOffCoord(currentCoord)
-//            if (vertValues.any { it.value }) {
-//                info { "Points that are ON" }
-//                info { vertValues.filterValues { it }.keys.toString() }
-//            }
-
-        var marchingCubeIndex = 0
-        for ((index, vertVal) in vertValues) {
-            marchingCubeIndex =
-                if (vertVal) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
-        }
-
-        // Now get that cube!
-        val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
-        val cubeBasePosition = vec3()
-        /**
-         * Make it blocky first, because of course blocky
-         */
-        cubeBasePosition.set(sideLength * currentCoord.x, sideLength * currentCoord.y, sideLength * currentCoord.z)
-        for (triangleIndex in sidesForTriangles.indices.step(3)) {
-            for (i in 0..2) { //per vertex in this particular triangle - and each vertex IS AN EDGE!
-
-                val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
-
-                val from = getVertex(cubeBasePosition, edge.first(), sideLength)
-
-                val to = getVertex(cubeBasePosition, edge.last(), sideLength)
-
-                from.lerp(to, 0.5f)
-                triangles.add(from.x)
-                triangles.add(from.y)
-                triangles.add(from.z)
+        if (useBox) {
+            if (hasRun && interactive) {
+                sceneManager.removeScene(scene)
             }
-        }
+            /**
+             * This is where the fun begins, I guess.
+             *
+             * Every point is actually the basis of a unique cube, so that's cool.
+             *
+             * Let's try and create the triangles for the current cube we are currently checking out.
+             */
+            cubesInModel.add(currentCubeIndex)
+            val currentCube = boxOfPoints.boxPoints[currentCubeIndex]
+            val currentCoord = currentCube.coord
 
-        if (interactive) {
-            val terrain = MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
-            modelInstance = terrain.modelInstance
-            scene = Scene(modelInstance)
-            model = modelInstance.model
-            sceneManager.addScene(scene)
-        }
-        hasRun = true
-//
+            info { "Current Index: $currentCubeIndex" }
 
-        if (cubesInModel.size >= boxOfPoints.boxPoints.size) {
-            info { "Totally done!" }
-            if (!interactive) {
+            val vertValues = getOnOffCoord(currentCoord)
+
+            var marchingCubeIndex = 0
+            for ((index, vertVal) in vertValues) {
+                marchingCubeIndex =
+                    if (vertVal) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
+            }
+
+            // Now get that cube!
+            val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
+            val cubeBasePosition = vec3()
+            /**
+             * Make it blocky first, because of course blocky
+             */
+            cubeBasePosition.set(sideLength * currentCoord.x, sideLength * currentCoord.y, sideLength * currentCoord.z)
+            for (triangleIndex in sidesForTriangles.indices.step(3)) {
+                for (i in 0..2) { //per vertex in this particular triangle - and each vertex IS AN EDGE!
+
+                    val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
+
+                    val from = getVertex(cubeBasePosition, edge.first(), sideLength)
+
+                    val to = getVertex(cubeBasePosition, edge.last(), sideLength)
+
+                    from.lerp(to, 0.5f)
+                    triangles.add(from.x)
+                    triangles.add(from.y)
+                    triangles.add(from.z)
+                }
+            }
+
+            if (interactive) {
                 val terrain = MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
                 modelInstance = terrain.modelInstance
                 scene = Scene(modelInstance)
                 model = modelInstance.model
                 sceneManager.addScene(scene)
             }
-            started = false
+            hasRun = true
+//
+
+            if (cubesInModel.size >= boxOfPoints.boxPoints.size) {
+                info { "Totally done!" }
+                if (!interactive) {
+                    val terrain = MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
+                    modelInstance = terrain.modelInstance
+                    scene = Scene(modelInstance)
+                    model = modelInstance.model
+                    sceneManager.addScene(scene)
+                }
+                started = false
 //                val cShape: btCollisionShape = Bullet.obtainStaticNodeShape(modelInstance.model.nodes)
 //                val motionState = MotionState().apply {
 //                    transform = modelInstance.transform
@@ -277,6 +289,66 @@ class MarchingCubeBuilder(
 //                val info = btRigidBody.btRigidBodyConstructionInfo(0f, motionState, cShape, Vector3.Zero)
 //
 //                dynamicsWorld.addRigidBody(btRigidBody(info))
+            }
+        } else {
+            started = false
+            val points = Array(numberOfPoints) { x ->
+                Array(numberOfPoints) { y ->
+                    Array(numberOfPoints) { z ->
+                        PointCoord(x, y, z)
+                    }
+                }.flatten()
+            }.flatMap { it.asIterable() }
+
+            for ((currentIndex, currentCoord) in points.withIndex()) {
+                info { "Current Index: $currentIndex" }
+                info { "Current Coord: $currentCoord" }
+
+                val vertValues = getOnOffCoord(currentCoord)
+                if (vertValues.values.any { it }) {
+                    info { "ON: ${vertValues.filterValues { it }.keys}" }
+                }
+
+                var marchingCubeIndex = 0
+                for ((index, vertVal) in vertValues) {
+                    marchingCubeIndex =
+                        if (vertVal) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
+                }
+
+                // Now get that cube!
+                val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
+                val cubeBasePosition = vec3()
+                /**
+                 * Make it blocky first, because of course blocky
+                 */
+                cubeBasePosition.set(
+                    sideLength * currentCoord.x,
+                    sideLength * currentCoord.y,
+                    sideLength * currentCoord.z
+                )
+                for (triangleIndex in sidesForTriangles.indices.step(3)) {
+                    for (i in 0..2) { //per vertex in this particular triangle - and each vertex IS AN EDGE!
+
+                        val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
+
+                        val from = getVertex(cubeBasePosition, edge.first(), sideLength)
+
+                        val to = getVertex(cubeBasePosition, edge.last(), sideLength)
+
+                        from.lerp(to, 0.5f)
+                        triangles.add(from.x)
+                        triangles.add(from.y)
+                        triangles.add(from.z)
+                    }
+                }
+            }
+            hasRun = true
+            info { "Zero boxes, tons of indexes, all done, man!" }
+            val terrain = MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
+            modelInstance = terrain.modelInstance
+            scene = Scene(modelInstance)
+            model = modelInstance.model
+            sceneManager.addScene(scene)
         }
     }
 
