@@ -1,4 +1,4 @@
-package depth.voxel
+package depth.core
 
 class DeepGameSettings {
     val gameWidth = 120f

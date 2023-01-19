@@ -1,11 +1,10 @@
-package depth.ecs.systems
+package depth.marching
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.Vector3
-import depth.voxel.Joiser
 import ktx.log.info
 import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute

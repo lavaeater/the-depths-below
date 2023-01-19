@@ -286,7 +286,7 @@ internal object MarchingCubesTables {
         intArrayOf(4,5), //4
         intArrayOf(5,6), //5
         intArrayOf(6,7), //6
-        intArrayOf(4,7), //7
+        intArrayOf(7,4), //7
         intArrayOf(0,4), //8
         intArrayOf(1,5), //9
         intArrayOf(2,6), //10

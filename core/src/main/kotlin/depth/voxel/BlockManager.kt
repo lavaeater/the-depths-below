@@ -1,5 +1,6 @@
 package depth.voxel
 
+import depth.core.DeepGameSettings
 import eater.injection.InjectionContext
 import ktx.collections.toGdxArray
 

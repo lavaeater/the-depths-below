@@ -3,14 +3,12 @@ package depth.ecs.systems
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.Input.Keys
-import com.badlogic.gdx.math.Vector3
 import depth.ecs.components.*
+import depth.marching.BoxOfPoints
 import eater.input.KeyPress
 import eater.input.command
 import ktx.app.KtxInputAdapter
 import ktx.ashley.allOf
-import ktx.math.plus
-import ktx.math.times
 import ktx.math.vec3
 
 

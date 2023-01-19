@@ -3,30 +3,25 @@ package depth.injection
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.math.Vector3
-import com.badlogic.gdx.physics.bullet.DebugDrawer
 import com.badlogic.gdx.physics.bullet.collision.*
 import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver
-import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver
-import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw
 import com.badlogic.gdx.physics.bullet.softbody.btSoftRigidDynamicsWorld
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import depth.ecs.systems.*
 import depth.voxel.BlockManager
-import depth.voxel.DeepGameSettings
+import depth.marching.BoxOfPoints
+import depth.core.DeepGameSettings
 import eater.core.MainGame
 import eater.ecs.ashley.systems.RemoveEntitySystem
 import eater.injection.InjectionContext
 import ktx.assets.disposeSafely
 import ktx.inject.Context
-import ktx.inject.register
 import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
@@ -70,10 +65,12 @@ object Context : InjectionContext() {
                 )
             )
             bindSingleton(createSceneManager())
-            bindSingleton(BoxOfPoints(
+            bindSingleton(
+                BoxOfPoints(
                 inject(),
                 5
-            ))
+            )
+            )
             setupBullet(this)
             bindSingleton(getEngine(gameSettings, false))
         }

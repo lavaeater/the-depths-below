@@ -4,11 +4,9 @@ import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.graphics.Color
 import depth.ecs.components.*
+import depth.marching.*
 import depth.marching.MarchingCubesTables
-import depth.voxel.Joiser
-import depth.voxel.MarchingCubeTerrain
-import depth.voxel.getVertex
-import depth.voxel.pow
+import depth.voxel.*
 import eater.input.KeyPress
 import eater.input.command
 import ktx.app.KtxInputAdapter
@@ -272,25 +270,36 @@ class KeyboardControlSystem(
     }
 
     fun getOnOffCoord(coord: PointCoord): Map<PointCoord, Boolean> {
-        val something = PointCoord.vertexIndexToPointCoordinate.map { (index, c) ->
-            val newCoord = coord.add(c)
+        val something = (0..7).map { vertexIndex ->
+            val newCoord = coord.coordForIndex(vertexIndex)
             var actualPoint = boxOfPoints.boxPoints.firstOrNull { it.coord == newCoord }
             if (actualPoint == null) {
                 actualPoint = BoxPoint(
                     newCoord,
                     1.0f
-//                    Joiser.getValueFor(
-//                        newCoord.x,
-//                        newCoord.y,
-//                        newCoord.z,
-//                        boxOfPoints.numberOfPoints,
-//                        boxOfPoints.numberOfPoints,
-//                        boxOfPoints.numberOfPoints
-//                    )
                 )
             }
             actualPoint!!.coord to actualPoint.on
         }
+//        val something = PointCoord.vertexIndexToPointCoordinate.map { (index, c) ->
+//            val newCoord = coord.add(c)
+//            var actualPoint = boxOfPoints.boxPoints.firstOrNull { it.coord == newCoord }
+//            if (actualPoint == null) {
+//                actualPoint = BoxPoint(
+//                    newCoord,
+//                    1.0f
+////                    Joiser.getValueFor(
+////                        newCoord.x,
+////                        newCoord.y,
+////                        newCoord.z,
+////                        boxOfPoints.numberOfPoints,
+////                        boxOfPoints.numberOfPoints,
+////                        boxOfPoints.numberOfPoints
+////                    )
+//                )
+//            }
+//            actualPoint!!.coord to actualPoint.on
+//        }
         return something.toMap()
     }
 
@@ -351,8 +360,13 @@ class KeyboardControlSystem(
             for (triangleIndex in sidesForTriangles.indices.step(3)) {
                 for (i in 0..2) { //per vertex in this particular triangle
                     val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
+
+                    val first = MarchingCubesTables.EDGE_FIRST_VERTEX
+
                     val from = getVertex(v0, edge.first(), sideLength)
+
                     val to = getVertex(v0, edge.last(), sideLength)
+
                     from.lerp(to, 0.5f)
                     triangles.add(from.x)
                     triangles.add(from.y)

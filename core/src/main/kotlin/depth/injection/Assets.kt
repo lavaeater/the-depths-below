@@ -2,7 +2,7 @@ package depth.injection
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Texture
-import depth.voxel.DeepGameSettings
+import depth.core.DeepGameSettings
 import eater.injection.InjectionContext.Companion.inject
 import ktx.assets.DisposableContainer
 import ktx.assets.DisposableRegistry
