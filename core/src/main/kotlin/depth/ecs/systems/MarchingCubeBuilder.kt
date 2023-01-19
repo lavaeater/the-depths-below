@@ -17,7 +17,7 @@ class MarchingCubeBuilder(
     private val sceneManager: SceneManager,
     private val dynamicsWorld: btDynamicsWorld,
     numberOfPoints: Int,
-    maxWorldSize: Int = 100000,
+    maxWorldSize: Int = 1000,
     private var started: Boolean = true,
     private val useCooldown: Boolean = false,
     private val useUnlimitedNoise: Boolean = true,
@@ -25,7 +25,7 @@ class MarchingCubeBuilder(
         private val useNoise: Boolean = true
 ) {
     init {
-        Joiser.numberOfPoints = maxWorldSize
+//        Joiser.numberOfPoints = maxWorldSize
     }
 
     private var needsPoints = true
@@ -43,7 +43,7 @@ class MarchingCubeBuilder(
     private lateinit var modelInstance: ModelInstance
     private lateinit var scene: Scene
 
-    private var boxOfPoints = BoxOfPoints(sceneManager, numberOfPoints, useNoise)
+    private var boxOfPoints = BoxOfPoints(sceneManager, numberOfPoints, 0, 0, 0, useNoise)
 
 
     fun toggleStarted() {
@@ -212,7 +212,7 @@ class MarchingCubeBuilder(
         val currentCoord = currentCube.coord
 
 //
-//            info { "Current Index: $currentCubeIndex" }
+            info { "Current Index: $currentCubeIndex" }
 //            info { "Current coord: $currentCoord" }
 
         val vertValues = getOnOffCoord(currentCoord)

@@ -62,14 +62,8 @@ object Context : InjectionContext() {
                 )
             )
             bindSingleton(createSceneManager())
-            bindSingleton(
-                BoxOfPoints(
-                inject(),
-                10
-                )
-            )
             setupBullet(this)
-            bindSingleton(MarchingCubeBuilder(inject(), inject(), inject(), true,))
+            bindSingleton(MarchingCubeBuilder(inject(), inject(), 10))
             bindSingleton(getEngine(gameSettings, false))
         }
     }
