@@ -15,7 +15,7 @@ import ktx.math.minus
 import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 
-open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : Terrain(size) {
+open class MarchingCubeTerrain(vertices: FloatArray, size: Float) : Terrain(size) {
     private var mesh: Mesh
     val colors = listOf(Color.BLUE, Color.RED, Color.YELLOW, Color.GREEN, Color.CORAL)
 

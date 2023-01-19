@@ -15,7 +15,10 @@ import net.mgsx.gltf.scene3d.scene.SceneManager
 class BoxOfPoints(
     private val sceneManager: SceneManager,
     private val numberOfPoints: Int,
-    private val useNoise: Boolean = true
+    private val x: Int,
+    private val y: Int,
+    private val z: Int,
+    useNoise: Boolean = true
 ) {
 
 
