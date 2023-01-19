@@ -19,6 +19,7 @@ class WorldManager(
 
     private val chunks = mutableListOf<MarchingChunk>()
     fun generateChunks(size: Int) {
+        //This was an honest mistake, but a very cool one - I used power of 2 instead of just multiplying by 2!
         Joiser.numberOfPoints = size.pow(2) * marchingCubeBuilder.numberOfPoints
 
 
