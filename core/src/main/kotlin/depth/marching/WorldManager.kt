@@ -1,13 +1,15 @@
 package depth.marching
 
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
+import depth.ecs.systems.MarchingCubeBuilder
 import ktx.log.info
 import net.mgsx.gltf.scene3d.scene.SceneManager
 import java.awt.SystemColor.info
 
 class WorldManager(
-    private val world: btDynamicsWorld,
-    private val sceneManager: SceneManager
+    private val marchingCubeBuilder: MarchingCubeBuilder,
+    private val sceneManager: SceneManager,
+    private val world: btDynamicsWorld
 ) {
     /**
      * Statically generate some more chunks to start off
@@ -15,11 +17,13 @@ class WorldManager(
 
     private val chunks = mutableListOf<MarchingChunk>()
     fun generateChunks() {
-        (0..1).map { x ->
-            val chunk = MarchingChunk(x, 0, 0)
-            chunks.add(chunk)
+        (-1..1).map { x ->
+            (-1..1).map { y ->
+                (-1..1).map { z ->
+                    chunks.add(marchingCubeBuilder.buildChunk(x, y, z))
+                }
+            }
         }
-
 
         info { "Chunks: ${chunks.size}" }
         for (chunk in chunks) {

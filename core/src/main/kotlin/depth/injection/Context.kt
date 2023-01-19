@@ -64,10 +64,10 @@ object Context : InjectionContext() {
             )
             bindSingleton(createSceneManager())
             setupBullet(this)
-            bindSingleton(WorldManager(inject(), inject()).apply {
+            bindSingleton(MarchingCubeBuilder(inject(), inject(), 10))
+            bindSingleton(WorldManager(inject(), inject(), inject()).apply {
                 generateChunks()
             })
-            bindSingleton(MarchingCubeBuilder(inject(), inject(), 10))
             bindSingleton(getEngine(gameSettings, false))
         }
     }

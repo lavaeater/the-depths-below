@@ -12,6 +12,8 @@ gradle-app.setting
 /headless/build/
 /server/build/
 /shared/build/
+/teavm/build/
+
 
 ## Java:
 *.class

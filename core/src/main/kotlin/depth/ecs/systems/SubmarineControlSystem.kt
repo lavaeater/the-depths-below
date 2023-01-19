@@ -146,8 +146,9 @@ class SubmarineControlSystem(
             { controlComponent.add(Rotation.YawRight) }
         )
         setUp(
-            Keys.P,"Toggle points") {
-         marchingCubeBuilder.togglePoints()
+            Keys.P, "Toggle points"
+        ) {
+            marchingCubeBuilder.togglePoints()
         }
     }
 
@@ -163,11 +164,6 @@ class SubmarineControlSystem(
     private val torqueFactor = 0.1f
     private val tmpVector = vec3()
     private val centralForce = vec3()
-
-    override fun update(deltaTime: Float) {
-        marchingCubeBuilder.update(deltaTime)
-        super.update(deltaTime)
-    }
 
     override fun processEntity(entity: Entity, deltaTime: Float) {
         val rigidBody = BulletRigidBody.get(entity).rigidBody

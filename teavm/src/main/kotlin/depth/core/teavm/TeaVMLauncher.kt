@@ -2,6 +2,7 @@
 
 package depth.core.teavm
 
+import com.badlogic.gdx.ApplicationListener
 import com.github.xpenatan.gdx.backends.teavm.TeaApplicationConfiguration
 import com.github.xpenatan.gdx.backends.web.WebApplication
 import depth.core.TheDepthsBelow
@@ -12,5 +13,5 @@ fun main() {
         width = 640
         height = 480
     }
-    WebApplication(TheDepthsBelow(), config)
+    WebApplication(TheDepthsBelow() as ApplicationListener, config)
 }

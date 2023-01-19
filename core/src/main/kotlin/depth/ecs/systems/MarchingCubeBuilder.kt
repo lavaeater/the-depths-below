@@ -17,7 +17,6 @@ import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
-import java.awt.Point
 
 class MarchingCubeBuilder(
     private val sceneManager: SceneManager,
@@ -366,6 +365,56 @@ class MarchingCubeBuilder(
 
             dynamicsWorld.addRigidBody(btRigidBody(info))
         }
+    }
+
+    fun buildChunk(chunkX: Int, chunkY: Int, chunkZ: Int): MarchingChunk {
+        val points = Array(numberOfPoints) { x ->
+            Array(numberOfPoints) { y ->
+                Array(numberOfPoints) { z ->
+                    PointCoord(x + chunkX * numberOfPoints, y + chunkY * numberOfPoints, z + chunkZ * numberOfPoints)
+                }
+            }.flatten()
+        }.flatMap { it.asIterable() }
+
+        val localTriangles = mutableListOf<Float>()
+        for ((currentIndex, currentCoord) in points.withIndex()) {
+            val vertValues = getOnOffCoord(currentCoord)
+            var marchingCubeIndex = 0
+            for ((index, vertVal) in vertValues) {
+                marchingCubeIndex =
+                    if (vertVal) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
+            }
+
+            // Now get that cube!
+            val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
+            val cubeBasePosition = vec3()
+            /**
+             * Make it blocky first, because of course blocky
+             */
+            cubeBasePosition.set(
+                sideLength * currentCoord.x,
+                sideLength * currentCoord.y,
+                sideLength * currentCoord.z
+            )
+            for (triangleIndex in sidesForTriangles.indices.step(3)) {
+                for (i in 0..2) { //per vertex in this particular triangle - and each vertex IS AN EDGE!
+
+                    val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
+
+                    val from = getVertex(cubeBasePosition, edge.first(), sideLength)
+
+                    val to = getVertex(cubeBasePosition, edge.last(), sideLength)
+
+                    from.lerp(to, 0.5f)
+                    localTriangles.add(from.x)
+                    localTriangles.add(from.y)
+                    localTriangles.add(from.z)
+                }
+            }
+        }
+        info { "Chunk is DONE!" }
+        val terrain = MarchingCubeTerrain(localTriangles.toTypedArray().toFloatArray(), 1f)
+        return MarchingChunk(chunkX, chunkY, chunkZ, terrain.modelInstance)
     }
 
     fun move(x: Int, y: Int, z: Int) {
