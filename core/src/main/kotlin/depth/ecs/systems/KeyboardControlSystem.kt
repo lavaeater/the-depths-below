@@ -27,16 +27,16 @@ class KeyboardControlSystem(
     KtxInputAdapter {
     private var dTime = 0f
     private val controlComponent = DirectionThing()
-    private var currentPoint = 0
+    private var currentCubeIndex = 0
     private val offset = vec3(-125f, 50f, -50f)
     private val currentTarget = vec3()
 
     private fun move(x: Int, y: Int, z: Int) {
-        val newPoint = boxOfPoints.boxPoints[currentPoint].coord.add(x, y, z)
+        val newPoint = boxOfPoints.boxPoints[currentCubeIndex].coord.add(x, y, z)
         val potentialBox = boxOfPoints.boxPoints.firstOrNull { it.coord == newPoint }
         if (potentialBox != null) {
             turnColorsOff()
-            currentPoint = boxOfPoints.boxPoints.indexOf(potentialBox)
+            currentCubeIndex = boxOfPoints.boxPoints.indexOf(potentialBox)
             updateCameraPosition()
         }
     }
@@ -152,16 +152,23 @@ class KeyboardControlSystem(
         }
     }
 
+    fun fixCubeIndex() {
+        if (currentCubeIndex > boxOfPoints.boxPoints.lastIndex)
+            currentCubeIndex = 0
+        if (currentCubeIndex < 0)
+            currentCubeIndex = boxOfPoints.boxPoints.lastIndex
+    }
+
     private fun indexUp() {
         turnColorsOff()
-        currentPoint++
-        updateCameraPosition()
+        currentCubeIndex++
+        fixCubeIndex()
     }
 
     private fun indexDown() {
         turnColorsOff()
-        currentPoint--
-        updateCameraPosition()
+        currentCubeIndex--
+        fixCubeIndex()
     }
 
     override fun keyDown(keycode: Int): Boolean {
@@ -177,7 +184,7 @@ class KeyboardControlSystem(
 
     private fun turnColorsOff() {
         if (hasPoints) {
-            val currentBox = boxOfPoints.boxPoints[currentPoint]
+            val currentBox = boxOfPoints.boxPoints[currentCubeIndex]
             for (vertIndex in 1..7) {
                 val otherBox = boxOfPoints
                     .boxPoints
@@ -208,7 +215,7 @@ class KeyboardControlSystem(
     private fun turnOnColors() {
         if (hasPoints) {
 
-            val currentBox = boxOfPoints.boxPoints[currentPoint]
+            val currentBox = boxOfPoints.boxPoints[currentCubeIndex]
             for (vertIndex in 1..7) {
                 val otherBox = boxOfPoints
                     .boxPoints
@@ -239,18 +246,13 @@ class KeyboardControlSystem(
     private val sideLength = 25f
 
     private fun updateCameraPosition() {
-        info { "currentIndex = $currentPoint" }
+        info { "currentIndex = $currentCubeIndex" }
 
-        if (currentPoint > boxOfPoints.boxPoints.lastIndex)
-            currentPoint = 0
-        if (currentPoint < 0)
-            currentPoint = boxOfPoints.boxPoints.lastIndex
-
-        info { "currentIndex = $currentPoint" }
+        info { "currentIndex = $currentCubeIndex" }
         turnOnColors()
 
 
-        val currentBox = boxOfPoints.boxPoints[currentPoint]
+        val currentBox = boxOfPoints.boxPoints[currentCubeIndex]
         info { "Currentbox: $currentBox" }
         /**
          *
@@ -269,7 +271,7 @@ class KeyboardControlSystem(
 //        camera.update()
     }
 
-    fun getOnOffCoord(coord: PointCoord): Map<PointCoord, Boolean> {
+    fun getOnOffCoord(coord: PointCoord): Map<Int, Boolean> {
         val something = (0..7).map { vertexIndex ->
             val newCoord = coord.coordForIndex(vertexIndex)
             var actualPoint = boxOfPoints.boxPoints.firstOrNull { it.coord == newCoord }
@@ -279,7 +281,7 @@ class KeyboardControlSystem(
                     1.0f
                 )
             }
-            actualPoint!!.coord to actualPoint.on
+            vertexIndex to actualPoint.on
         }
 //        val something = PointCoord.vertexIndexToPointCoordinate.map { (index, c) ->
 //            val newCoord = coord.add(c)
@@ -287,15 +289,14 @@ class KeyboardControlSystem(
 //            if (actualPoint == null) {
 //                actualPoint = BoxPoint(
 //                    newCoord,
-//                    1.0f
-////                    Joiser.getValueFor(
-////                        newCoord.x,
-////                        newCoord.y,
-////                        newCoord.z,
-////                        boxOfPoints.numberOfPoints,
-////                        boxOfPoints.numberOfPoints,
-////                        boxOfPoints.numberOfPoints
-////                    )
+//                    Joiser.getValueFor(
+//                        newCoord.x,
+//                        newCoord.y,
+//                        newCoord.z,
+//                        boxOfPoints.numberOfPoints,
+//                        boxOfPoints.numberOfPoints,
+//                        boxOfPoints.numberOfPoints
+//                    )
 //                )
 //            }
 //            actualPoint!!.coord to actualPoint.on
@@ -303,24 +304,27 @@ class KeyboardControlSystem(
         return something.toMap()
     }
 
-    val coolDown = 0.1f
-    var acc = 0f
+    private val coolDown = 0.25f
+    private var acc = 0f
     override fun update(deltaTime: Float) {
         if (started) {
             if (createPoints) {
                 createPoints = false
                 togglePoints()
             }
-//            acc += deltaTime
-//            if (acc > coolDown) {
-            acc = 0f
-            updateModel()
-            turnColorsOff()
-            currentPoint++
-            updateCameraPosition()
+            acc += deltaTime
+            if (acc > coolDown) {
+                acc = 0f
+                updateModel()
+                indexUp()
+                turnOnColors()
+     //           updateCameraPosition()
+            }
         }
-//        }
     }
+
+    val fromVector = vec3()
+    val toVector = vec3()
 
     private fun updateModel() {
         /**
@@ -330,63 +334,78 @@ class KeyboardControlSystem(
          *
          * Let's try and create the triangles for the current cube we are currently checking out.
          */
-        cubesInModel.add(currentPoint)
-        val currentCube = boxOfPoints.boxPoints[currentPoint]
+        cubesInModel.add(currentCubeIndex)
+        val currentCube = boxOfPoints.boxPoints[currentCubeIndex]
         val currentCoord = currentCube.coord
 
-        if (
-            currentCoord.x in 1 until boxOfPoints.numberOfPoints &&
-            currentCoord.y in 1 until boxOfPoints.numberOfPoints &&
-            currentCoord.z in 1 until boxOfPoints.numberOfPoints
-        ) {
+//        if (
+//            currentCoord.x in 1 until boxOfPoints.numberOfPoints &&
+//            currentCoord.y in 1 until boxOfPoints.numberOfPoints &&
+//            currentCoord.z in 1 until boxOfPoints.numberOfPoints
+//        ) {
 
+        info { "Current Index: $currentCubeIndex" }
+        info { "Current coord: $currentCoord" }
 
-            val vertValues = getOnOffCoord(currentCoord)
-
-            var marchingCubeIndex = 0
-            for ((index, vertVal) in vertValues.values.withIndex()) {
-                marchingCubeIndex =
-                    if (vertVal) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
-            }
-
-            // Now get that cube!
-            val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
-            val v0 = vec3()
-            val triangles = mutableListOf<Float>() //Can be transformed to floatarray by a badass
-            /**
-             * Make it blocky first, because of course blocky
-             */
-            v0.set(sideLength * currentCoord.x, sideLength * currentCoord.y, sideLength * currentCoord.z)
-            for (triangleIndex in sidesForTriangles.indices.step(3)) {
-                for (i in 0..2) { //per vertex in this particular triangle
-                    val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
-
-                    val first = MarchingCubesTables.EDGE_FIRST_VERTEX
-
-                    val from = getVertex(v0, edge.first(), sideLength)
-
-                    val to = getVertex(v0, edge.last(), sideLength)
-
-                    from.lerp(to, 0.5f)
-                    triangles.add(from.x)
-                    triangles.add(from.y)
-                    triangles.add(from.z)
-                }
-            }
-
-            val terrain = MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
-            sceneManager.addScene(Scene(terrain.modelInstance))
-            if (cubesInModel.size >= boxOfPoints
-                    .boxPoints
-                    .filter {
-                        it.coord.x in 1 until boxOfPoints.numberOfPoints &&
-                            it.coord.y in 1 until boxOfPoints.numberOfPoints &&
-                            it.coord.z in 1 until boxOfPoints.numberOfPoints
-                    }.size
-            )
-                started = false
+        val vertValues = getOnOffCoord(currentCoord)
+        if(vertValues.any { it.value }) {
+            info { "Points that are ON" }
+            info { vertValues.filterValues { it }.keys.toString() }
         }
+
+        var marchingCubeIndex = 0
+        for ((index, vertVal) in vertValues) {
+            marchingCubeIndex =
+                if (vertVal) marchingCubeIndex or 2.pow(index) else marchingCubeIndex
+        }
+
+        // Now get that cube!
+        val sidesForTriangles = MarchingCubesTables.TRIANGLE_TABLE[marchingCubeIndex]
+        val cubeBasePosition = vec3()
+        val triangles = mutableListOf<Float>() //Can be transformed to floatarray by a badass
+        /**
+         * Make it blocky first, because of course blocky
+         */
+        cubeBasePosition.set(sideLength * currentCoord.x, sideLength * currentCoord.y, sideLength * currentCoord.z)
+        for (triangleIndex in sidesForTriangles.indices.step(3)) {
+            for (i in 0..2) { //per vertex in this particular triangle - and each vertex IS AN EDGE!
+//                    val f = currentCoord.coordForIndex(MarchingCubesTables.EDGE_FIRST_VERTEX[sidesForTriangles[triangleIndex + i]])
+//                    val t = currentCoord.coordForIndex(MarchingCubesTables.EDGE_SECOND_VERTEX[sidesForTriangles[triangleIndex + i]])
+//                    // f and t are now the index for the triangle
+//                    fromVector.set(f.x * sideLength, f.y * sideLength, f.z * sideLength)
+//                    toVector.set(t.x * sideLength, t.y * sideLength, t.z * sideLength)
+
+                val edge = MarchingCubesTables.EDGES[sidesForTriangles[triangleIndex + i]]
+
+                val from = getVertex(cubeBasePosition, edge.first(), sideLength)
+
+                val to = getVertex(cubeBasePosition, edge.last(), sideLength)
+
+//                    fromVector.lerp(toVector, 0.5f)
+//                    triangles.add(fromVector.x)
+//                    triangles.add(fromVector.y)
+//                    triangles.add(fromVector.z)
+
+                from.lerp(to, 0.5f)
+                triangles.add(from.x)
+                triangles.add(from.y)
+                triangles.add(from.z)
+            }
+        }
+
+        val terrain = MarchingCubeTerrain(triangles.toTypedArray().toFloatArray(), 1f)
+        sceneManager.addScene(Scene(terrain.modelInstance))
+        if (cubesInModel.size >= boxOfPoints.boxPoints.size)
+//                .boxPoints
+//                .filter {
+//                    it.coord.x in 1 until boxOfPoints.numberOfPoints &&
+//                        it.coord.y in 1 until boxOfPoints.numberOfPoints &&
+//                        it.coord.z in 1 until boxOfPoints.numberOfPoints
+//                }.size
+//        )
+            started = false
     }
+//    }
 
 
 }

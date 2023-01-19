@@ -23,7 +23,7 @@ object Joiser {
 
         val scaleDomain = ModuleScaleDomain()
         scaleDomain.setSource(correct)
-        val scale = 32.0
+        val scale = 4.0
         scaleDomain.setScaleX(scale)
         scaleDomain.setScaleY(scale)
         scaleDomain.setScaleZ(scale)
@@ -32,7 +32,9 @@ object Joiser {
         scaleDomain
     }
 
-    fun getValueFor(x: Int, y: Int, z: Int, width: Int = 100, height: Int = 100, depth: Int = 100): Float {
+    var numberOfPoints = 100
+
+    fun getValueFor(x: Int, y: Int, z: Int, width: Int = numberOfPoints, height: Int = numberOfPoints, depth: Int = numberOfPoints): Float {
         val range = MappingRange.DEFAULT
         val dx = range.map1.x - range.map0.x
         val dy = range.loop1.y - range.loop0.y
