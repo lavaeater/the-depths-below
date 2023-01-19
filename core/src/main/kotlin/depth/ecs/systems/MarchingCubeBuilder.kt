@@ -3,7 +3,12 @@ package depth.ecs.systems
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g3d.Model
 import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.physics.bullet.Bullet
+import com.badlogic.gdx.physics.bullet.collision.btCollisionShape
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody
+import depth.ecs.components.MotionState
 import depth.marching.*
 import depth.marching.MarchingCubesTables
 import depth.voxel.pow
@@ -292,10 +297,13 @@ class MarchingCubeBuilder(
             }
         } else {
             started = false
+            val xOffset = -5
+            val yOffset = -5
+            val zOffset = -5
             val points = Array(numberOfPoints) { x ->
                 Array(numberOfPoints) { y ->
                     Array(numberOfPoints) { z ->
-                        PointCoord(x, y, z)
+                        PointCoord(x + xOffset, y + yOffset, z + zOffset)
                     }
                 }.flatten()
             }.flatMap { it.asIterable() }
@@ -349,6 +357,14 @@ class MarchingCubeBuilder(
             scene = Scene(modelInstance)
             model = modelInstance.model
             sceneManager.addScene(scene)
+
+            val cShape: btCollisionShape = Bullet.obtainStaticNodeShape(modelInstance.model.nodes)
+            val motionState = MotionState().apply {
+                transform = modelInstance.transform
+            }
+            val info = btRigidBody.btRigidBodyConstructionInfo(0f, motionState, cShape, Vector3.Zero)
+
+            dynamicsWorld.addRigidBody(btRigidBody(info))
         }
     }
 
