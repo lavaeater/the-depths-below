@@ -61,7 +61,7 @@ fun createSubMarine() {
             offset.set(0f, 0f, 10f)
             pointLightEx = PointLightEx().apply {
                 setColor(Color(.5f, .5f, 1f, 1f))
-                setIntensity(10000f)
+                setIntensity(50000f)
                 inject<SceneManager>().environment.add(this)
             }
 

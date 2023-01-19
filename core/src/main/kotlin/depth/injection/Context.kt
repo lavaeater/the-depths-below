@@ -24,6 +24,7 @@ import eater.injection.InjectionContext
 import ktx.assets.disposeSafely
 import ktx.inject.Context
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.attributes.FogAttribute
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight
@@ -90,7 +91,9 @@ object Context : InjectionContext() {
         val brdfLUT = Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"))
 
         sceneManager.environment.apply {
-            set(ColorAttribute(ColorAttribute.AmbientLight, .1f, .1f, .1f, 1f))
+            set(ColorAttribute(ColorAttribute.Fog, Color(0f, 0f, 0.2f, 1f)))
+            set(FogAttribute(FogAttribute.FogEquation).set(25f, 500f, 10f))
+            set(ColorAttribute(ColorAttribute.AmbientLight, 0f, 0f, .3f, 1f))
             add(DirectionalShadowLight().apply {
                 set(1f, 1f, 1f, -1f, -1f, 0f)
             })
@@ -98,15 +101,15 @@ object Context : InjectionContext() {
                 set(1f, 1f, 1f, 1f, 0f, -1f)
             })
         }
-        sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
-        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
-        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap))
+//        sceneManager.environment.set(PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT))
+//        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap))
+//        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap))
 
         // setup skybox
 
 //        // setup skybox
-        val skybox = SceneSkybox(environmentCubemap)
-        sceneManager.skyBox = skybox
+//        val skybox = SceneSkybox(environmentCubemap)
+//        sceneManager.skyBox = skybox
         return sceneManager
     }
 
@@ -133,7 +136,7 @@ object Context : InjectionContext() {
                 Gdx.input.inputProcessor = this
             })
             addSystem(RenderSystem3d(inject()))
-//            addSystem(UpdateChunkSystem(inject(), inject()))
+            addSystem(UpdateChunkSystem(inject(), inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
     }

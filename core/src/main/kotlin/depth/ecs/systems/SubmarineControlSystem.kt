@@ -2,6 +2,7 @@ package depth.ecs.systems
 
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.systems.IteratingSystem
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import depth.ecs.components.*
 import depth.marching.MarchingCubeBuilder
@@ -164,6 +165,11 @@ class SubmarineControlSystem(
     private val torqueFactor = 0.1f
     private val tmpVector = vec3()
     private val centralForce = vec3()
+
+    override fun update(deltaTime: Float) {
+        Gdx.input.inputProcessor = this
+        super.update(deltaTime)
+    }
 
     override fun processEntity(entity: Entity, deltaTime: Float) {
         val rigidBody = BulletRigidBody.get(entity).rigidBody

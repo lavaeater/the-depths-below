@@ -1,25 +1,36 @@
 package depth.ecs.systems
 
+import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.systems.IntervalSystem
+import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.math.collision.BoundingBox
+import depth.ecs.components.Camera3dFollowComponent
+import depth.ecs.components.MotionState
 import depth.marching.WorldManager
+import ktx.ashley.allOf
 import ktx.log.info
 import ktx.math.vec3
 
 class UpdateChunkSystem(
     private val worldManager: WorldManager,
     private val camera: PerspectiveCamera
-) : EntitySystem() {
+) : IteratingSystem(allOf(Camera3dFollowComponent::class, MotionState::class).get()) {
+    private val playerPosition = vec3()
+    private val playerOrientation = vec3()
     override fun update(deltaTime: Float) {
-        for (chunk in worldManager.chunks) {
-            if (anyPointInFrustum(chunk.boundingBox)) {
-                worldManager.showChunk(chunk)
-            } else {
-                worldManager.hideChunk(chunk)
-            }
-        }
+//        for (chunk in worldManager.chunks) {
+//            if (anyPointInFrustum(chunk.boundingBox)) {
+//                worldManager.showChunk(chunk)
+//            } else {
+//                worldManager.hideChunk(chunk)
+//            }
+//        }
+    }
+
+    override fun processEntity(entity: Entity?, deltaTime: Float) {
+        TODO("Not yet implemented")
     }
 
     private val tmpVector = vec3()

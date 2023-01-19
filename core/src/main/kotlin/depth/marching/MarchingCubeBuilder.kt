@@ -413,7 +413,6 @@ class MarchingCubeBuilder(
                 }
             }
         }
-        info { "Chunk is DONE!" }
         val terrain = MarchingCubeTerrain(localTriangles.toTypedArray().toFloatArray(), 1f)
         return MarchingChunk(chunkX, chunkY, chunkZ).apply {
             modelInstance = terrain.modelInstance
