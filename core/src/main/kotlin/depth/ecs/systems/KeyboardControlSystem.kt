@@ -304,7 +304,7 @@ class KeyboardControlSystem(
         return something.toMap()
     }
 
-    private val coolDown = 0.25f
+    private val coolDown = 0.05f
     private var acc = 0f
     override fun update(deltaTime: Float) {
         if (started) {

@@ -68,7 +68,7 @@ object Context : InjectionContext() {
             bindSingleton(
                 BoxOfPoints(
                 inject(),
-                4
+                8
             )
             )
             setupBullet(this)
