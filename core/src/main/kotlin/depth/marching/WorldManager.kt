@@ -16,7 +16,7 @@ class WorldManager(
     private val chunks = mutableListOf<MarchingChunk>()
     fun generateChunks() {
         (0..1).map { x ->
-            val chunk = MarchingChunk(x, 0, 0, 8, 50f)
+            val chunk = MarchingChunk(x, 0, 0)
             chunks.add(chunk)
         }
 
