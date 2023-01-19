@@ -69,8 +69,9 @@ object Context : InjectionContext() {
                 BoxOfPoints(
                 inject(),
                 8
+                )
             )
-            )
+            bindSingleton(MarchingCubeBuilder(inject(), inject(),true))
             setupBullet(this)
             bindSingleton(getEngine(gameSettings, false))
         }
@@ -142,12 +143,7 @@ object Context : InjectionContext() {
                 Gdx.input.inputProcessor = this
             })
             addSystem(
-                KeyboardControlSystem(
-                    inject(),
-                    inject(),
-                    true,
-                    true
-                ))
+                KeyboardControlSystem(inject()))
             addSystem(RenderSystem3d(inject(), inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
