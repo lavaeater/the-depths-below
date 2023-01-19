@@ -21,8 +21,7 @@ import net.mgsx.gltf.scene3d.scene.SceneManager
 class MarchingCubeBuilder(
     private val sceneManager: SceneManager,
     private val dynamicsWorld: btDynamicsWorld,
-    private val numberOfPoints: Int,
-    private val maxWorldSize: Int = 1000,
+    val numberOfPoints: Int,
     private var started: Boolean = true,
     private val useCooldown: Boolean = false,
     private val useUnlimitedNoise: Boolean = true,
@@ -171,7 +170,8 @@ class MarchingCubeBuilder(
                     vertexIndex to actualPoint!!.on
                 } else {
                     val isoValue = Joiser.getValueFor(newCoord.x, newCoord.y, newCoord.z)
-                    vertexIndex to (isoValue * 100000f * (1f + ((maxWorldSize - newCoord.y) / maxWorldSize)) < 55000f)
+                    vertexIndex to (isoValue * 100000f < 55000f)
+//                    * (1f + ((maxWorldSize - newCoord.y) / maxWorldSize))
                 }
             }.toMap()
         else

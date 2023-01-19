@@ -51,7 +51,7 @@ object Context : InjectionContext() {
             bindSingleton(BlockManager(inject()))
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
-                fieldOfView = 67f
+                fieldOfView = 45f
                 near = 1f
                 far = 3000f
             })
@@ -66,7 +66,7 @@ object Context : InjectionContext() {
             setupBullet(this)
             bindSingleton(MarchingCubeBuilder(inject(), inject(), 10))
             bindSingleton(WorldManager(inject(), inject(), inject()).apply {
-                generateChunks()
+                generateChunks(5)
             })
             bindSingleton(getEngine(gameSettings, false))
         }
@@ -127,11 +127,7 @@ object Context : InjectionContext() {
     private fun getEngine(gameSettings: DeepGameSettings, debugBox2d: Boolean): Engine {
         return PooledEngine().apply {
             addSystem(RemoveEntitySystem())
-            addSystem(UpdatePointLightSystem(PointLightEx().apply {
-                setColor(Color(.5f, .5f, 1f, 1f))
-                setIntensity(10000f)
-                inject<SceneManager>().environment.add(this)
-            }, inject()))
+            addSystem(UpdatePointLightSystem())
             addSystem(UpdatePerspectiveCameraSystem(inject()))
             addSystem(BulletUpdateSystem(inject()))
             addSystem(SubmarineControlSystem(inject()).apply {

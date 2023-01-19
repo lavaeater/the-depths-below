@@ -1,5 +1,6 @@
 package depth.injection
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Quaternion
 import com.badlogic.gdx.math.Vector3
@@ -13,6 +14,7 @@ import eater.injection.InjectionContext.Companion.inject
 import ktx.ashley.entity
 import ktx.ashley.with
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.lights.PointLightEx
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
 
@@ -54,6 +56,15 @@ fun createSubMarine() {
             }
             rigidBody = submarineBody
             inject<btDynamicsWorld>().addRigidBody(submarineBody)
+        }
+        with<PointLightComponent> {
+            offset.set(0f, 0f, 10f)
+            pointLightEx = PointLightEx().apply {
+                setColor(Color(.5f, .5f, 1f, 1f))
+                setIntensity(10000f)
+                inject<SceneManager>().environment.add(this)
+            }
+
         }
     }
 }

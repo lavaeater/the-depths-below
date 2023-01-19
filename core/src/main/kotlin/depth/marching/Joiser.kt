@@ -32,7 +32,7 @@ object Joiser {
         scaleDomain
     }
 
-    var numberOfPoints = 100
+    var numberOfPoints = 1000
 
     fun getValueFor(x: Int, y: Int, z: Int, width: Int = numberOfPoints, height: Int = numberOfPoints, depth: Int = numberOfPoints): Float {
         val range = MappingRange.DEFAULT
