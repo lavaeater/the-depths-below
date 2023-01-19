@@ -13,7 +13,7 @@ import ktx.math.vec3
 
 
 class SubmarineControlSystem(
-    private val boxOfPoints: BoxOfPoints
+    private val marchingCubeBuilder: MarchingCubeBuilder,
 ) :
     IteratingSystem(
         allOf(
@@ -31,6 +31,73 @@ class SubmarineControlSystem(
     private val speed = 50f
 
     private val controlMap = command("Controoool") {
+        setUp(
+            Keys.P,
+            "Move In"
+        ) {
+            marchingCubeBuilder.togglePoints()
+        }
+        setUp(
+            Keys.B,
+            "Move In"
+        ) {
+            marchingCubeBuilder.toggleStarted()
+        }
+        setUp(
+            Keys.SPACE,
+            "Move In"
+        ) {
+            marchingCubeBuilder.updateModel()
+        }
+        setUp(
+            Keys.W,
+            "Move In"
+        ) {
+            marchingCubeBuilder.moveIn()
+        }
+        setUp(
+            Keys.S,
+            "Move Out"
+        ) {
+            marchingCubeBuilder.moveOut()
+        }
+        setUp(
+            Keys.A,
+            "Move Left"
+        ) {
+            marchingCubeBuilder.moveLeft()
+        }
+        setUp(
+            Keys.D,
+            "Move Right"
+        ) {
+            marchingCubeBuilder.moveRight()
+        }
+        setUp(
+            Keys.UP,
+            "Move Up"
+        ) {
+            marchingCubeBuilder.moveUp()
+        }
+        setUp(
+            Keys.DOWN,
+            "Move DOwn"
+        ) {
+            marchingCubeBuilder.moveDown()
+        }
+
+        setUp(
+            Keys.RIGHT,
+            "Move Up"
+        ) {
+            marchingCubeBuilder.indexUp()
+        }
+        setUp(
+            Keys.LEFT,
+            "Move DOwn"
+        ) {
+            marchingCubeBuilder.indexDown()
+        }
         setBoth(
             Keys.W,
             "Throttle F",
@@ -81,7 +148,7 @@ class SubmarineControlSystem(
         )
         setUp(
             Keys.P,"Toggle points") {
-         boxOfPoints.togglePoints()
+         marchingCubeBuilder.togglePoints()
         }
     }
 
@@ -97,6 +164,11 @@ class SubmarineControlSystem(
     private val torqueFactor = 1f
     private val tmpVector = vec3()
     private val centralForce = vec3()
+
+    override fun update(deltaTime: Float) {
+        marchingCubeBuilder.update(deltaTime)
+        super.update(deltaTime)
+    }
 
     override fun processEntity(entity: Entity, deltaTime: Float) {
         val rigidBody = BulletRigidBody.get(entity).rigidBody

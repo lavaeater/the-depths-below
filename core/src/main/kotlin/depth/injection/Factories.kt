@@ -37,7 +37,7 @@ fun createSubMarine() {
             inject<SceneManager>().addScene(submarineScene)
         }
         with<Camera3dFollowComponent> {
-            offset.set(10f, 5f, 0f)
+            offset.set(5f, 5f, 0f)
         }
         with<KeyboardControlComponent>()
         lateinit var motionState: MotionState

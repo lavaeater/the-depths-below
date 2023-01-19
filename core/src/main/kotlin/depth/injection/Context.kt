@@ -51,9 +51,6 @@ object Context : InjectionContext() {
             bindSingleton(game)
             bindSingleton(PerspectiveCamera().apply {
                 fieldOfView = 67f
-//                position.set(vec3(250f, 250f, 250f))
-////                lookAt(Vector3.Zero)
-//                lookAt(vec3(50f, 100f, -50f))
                 near = 1f
                 far = 3000f
             })
@@ -71,8 +68,8 @@ object Context : InjectionContext() {
                 8
                 )
             )
-            bindSingleton(MarchingCubeBuilder(inject(), inject(),true))
             setupBullet(this)
+            bindSingleton(MarchingCubeBuilder(inject(), inject(), inject(),true))
             bindSingleton(getEngine(gameSettings, false))
         }
     }
@@ -142,9 +139,7 @@ object Context : InjectionContext() {
             addSystem(SubmarineControlSystem(inject()).apply {
                 Gdx.input.inputProcessor = this
             })
-            addSystem(
-                KeyboardControlSystem(inject()))
-            addSystem(RenderSystem3d(inject(), inject()))
+            addSystem(RenderSystem3d(inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }
     }

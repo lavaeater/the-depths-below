@@ -2,6 +2,7 @@ package depth.marching
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.ModelInstance
@@ -15,6 +16,7 @@ import ktx.math.vec3
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 
 open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : Terrain(size) {
+    private var mesh: Mesh
     val colors = listOf(Color.BLUE, Color.RED, Color.YELLOW, Color.GREEN, Color.CORAL)
 
     init {
@@ -86,7 +88,7 @@ open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : 
             meshBuilder.triangle(v0, v1, v2)
         }
 
-        val mesh = meshBuilder.end()
+        mesh = meshBuilder.end()
         val mb = ModelBuilder()
         mb.begin()
         val material = Material()
@@ -109,6 +111,7 @@ open class MarchingCubeTerrain(private val vertices: FloatArray, size: Float) : 
     }
 
     override fun dispose() {
+        mesh.dispose()
     }
 
 }
