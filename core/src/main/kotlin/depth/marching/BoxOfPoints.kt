@@ -14,7 +14,8 @@ import net.mgsx.gltf.scene3d.scene.SceneManager
 
 class BoxOfPoints(
     private val sceneManager: SceneManager,
-    val numberOfPoints: Int
+    private val numberOfPoints: Int,
+    private val useNoise: Boolean = true
 ) {
 
 
@@ -23,7 +24,7 @@ class BoxOfPoints(
      */
 
 
-    val boxPoints: List<BoxPoint> = getBoxPointsOnlyCentral()
+    val boxPoints: List<BoxPoint> = if(useNoise) getBoxPointsFromNoise() else getBoxPointsOnlyCentral()
 
     private fun getBoxPointsOnlyCentral(): List<BoxPoint> {
         return Array(numberOfPoints) { x ->

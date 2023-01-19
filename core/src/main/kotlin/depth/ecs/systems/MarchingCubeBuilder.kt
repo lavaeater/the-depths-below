@@ -206,15 +206,15 @@ class MarchingCubeBuilder(
             val currentCube = boxOfPoints.boxPoints[currentCubeIndex]
             val currentCoord = currentCube.coord
 
-
-            info { "Current Index: $currentCubeIndex" }
-            info { "Current coord: $currentCoord" }
+//
+//            info { "Current Index: $currentCubeIndex" }
+//            info { "Current coord: $currentCoord" }
 
             val vertValues = getOnOffCoord(currentCoord)
-            if (vertValues.any { it.value }) {
-                info { "Points that are ON" }
-                info { vertValues.filterValues { it }.keys.toString() }
-            }
+//            if (vertValues.any { it.value }) {
+//                info { "Points that are ON" }
+//                info { vertValues.filterValues { it }.keys.toString() }
+//            }
 
             var marchingCubeIndex = 0
             for ((index, vertVal) in vertValues) {
