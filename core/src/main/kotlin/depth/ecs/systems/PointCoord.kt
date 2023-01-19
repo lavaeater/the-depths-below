@@ -25,13 +25,15 @@ data class PointCoord(val x: Int, val y: Int, val z: Int) {
     }
 
     companion object {
+        //TODO: Redo this according to paper
+        //MAYBE My tables are wrong?
         val vertexIndexToPointCoordinate = mapOf(
             0 to PointCoord(0, 0, 0),
             1 to PointCoord(1, 0, 0),
-            2 to PointCoord(1, 0, 1),
-            3 to PointCoord(0, 0, 1),
-            4 to PointCoord(0, 1, 0),
-            5 to PointCoord(1, 1, 0),
+            2 to PointCoord(1, 1,0),
+            3 to PointCoord(0, 1,0),
+            4 to PointCoord(0, 0,1),
+            5 to PointCoord(1, 0,1),
             6 to PointCoord(1, 1, 1),
             7 to PointCoord(0, 1, 1)
         )
