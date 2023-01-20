@@ -91,8 +91,8 @@ object Context : InjectionContext() {
         val brdfLUT = Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"))
 
         sceneManager.environment.apply {
-            set(ColorAttribute(ColorAttribute.Fog, Color(0f, 0f, 0.2f, 1f)))
-            set(FogAttribute(FogAttribute.FogEquation).set(25f, 500f, 10f))
+//            set(ColorAttribute(ColorAttribute.Fog, Color(0f, 0f, 0.2f, 1f)))
+//            set(FogAttribute(FogAttribute.FogEquation).set(25f, 500f, 10f))
             set(ColorAttribute(ColorAttribute.AmbientLight, 0f, 0f, .3f, 1f))
             add(DirectionalShadowLight().apply {
                 set(1f, 1f, 1f, -1f, -1f, 0f)
@@ -135,7 +135,7 @@ object Context : InjectionContext() {
             addSystem(SubmarineControlSystem(inject()).apply {
                 Gdx.input.inputProcessor = this
             })
-            addSystem(RenderSystem3d(inject()))
+            addSystem(RenderSystem3d(inject(), inject()))
             addSystem(UpdateChunkSystem(inject(), inject()))
 //            addSystem(DebugRenderSystem3d(inject<ExtendViewport>(), inject()))
         }

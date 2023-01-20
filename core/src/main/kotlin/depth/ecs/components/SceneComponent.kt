@@ -8,6 +8,7 @@ import net.mgsx.gltf.scene3d.scene.Scene
 
 class SceneComponent: Component, Pool.Poolable {
     private var _scene: Scene? = null
+    var added = false
     var scene:Scene
         get() {
             return _scene!!
@@ -18,6 +19,7 @@ class SceneComponent: Component, Pool.Poolable {
 
     override fun reset() {
         _scene = null
+        added = false
     }
 
     companion object {

@@ -34,6 +34,7 @@ fun createSubMarine() {
     val localInertia = vec3()
 
     engine().entity {
+        with<VisibleComponent>()
         with<SceneComponent> {
             scene = submarineScene
             inject<SceneManager>().addScene(submarineScene)

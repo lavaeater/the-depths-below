@@ -11,6 +11,7 @@ import ktx.math.vec3
 import net.mgsx.gltf.scene3d.scene.Scene
 
 data class MarchingChunk(val chunkX: Int, val chunkY: Int, val chunkZ: Int) {
+    val chunkCoord = PointCoord(chunkX, chunkY, chunkZ)
     var visible = true
     val hidden get() = !visible
     var cubes: Int = 10

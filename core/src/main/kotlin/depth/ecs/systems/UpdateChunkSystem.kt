@@ -17,20 +17,19 @@ class UpdateChunkSystem(
     private val worldManager: WorldManager,
     private val camera: PerspectiveCamera
 ) : IteratingSystem(allOf(Camera3dFollowComponent::class, MotionState::class).get()) {
-    private val playerPosition = vec3()
-    private val playerOrientation = vec3()
-    override fun update(deltaTime: Float) {
-//        for (chunk in worldManager.chunks) {
-//            if (anyPointInFrustum(chunk.boundingBox)) {
-//                worldManager.showChunk(chunk)
-//            } else {
-//                worldManager.hideChunk(chunk)
-//            }
-//        }
+
+    override fun processEntity(entity: Entity, deltaTime: Float) {
+        val motionState = MotionState.get(entity)
+        worldManager.expandTheWorld(motionState)
     }
 
-    override fun processEntity(entity: Entity?, deltaTime: Float) {
-        TODO("Not yet implemented")
+    override fun update(deltaTime: Float) {
+        super.update(deltaTime)
+        if(worldManager.chunksToBuild.any()) {
+            val chunkToBuild = worldManager.chunksToBuild.first()
+            worldManager.chunksToBuild.remove(chunkToBuild)
+            worldManager.buildAndAddNewChunk(chunkToBuild)
+        }
     }
 
     private val tmpVector = vec3()
