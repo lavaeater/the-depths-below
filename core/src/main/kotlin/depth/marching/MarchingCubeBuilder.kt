@@ -44,6 +44,7 @@ class MarchingCubeBuilder(
     private lateinit var model: Model
     private lateinit var modelInstance: ModelInstance
     private lateinit var scene: Scene
+    private val minY = -15
 
     private var boxOfPoints = if (useBox) BoxOfPoints(sceneManager, numberOfPoints, 0, 0, 0, useNoise) else BoxOfPoints(
         sceneManager,
@@ -173,6 +174,7 @@ class MarchingCubeBuilder(
                     val isoValue = Joiser.getValueFor(newCoord.x, newCoord.y, newCoord.z)
                     vertexIndex to ((isoValue * 100000f) < 55000f)
 //                    * (1f + ((maxWorldSize - newCoord.y) / maxWorldSize))
+                    //if(coord.y <= minY) vertexIndex to true else
                 }
             }.toMap()
         else

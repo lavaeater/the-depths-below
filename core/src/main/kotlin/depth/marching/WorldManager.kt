@@ -43,21 +43,25 @@ class WorldManager(
     }
 
     fun buildIfNecessary() {
-        if(chunksToBuild.any()) {
+        if (chunksToBuild.any()) {
             val chunkToBuild =
-                chunksToBuild.minByOrNull { (it.z -previousPlayerCoord.z + it.x - previousPlayerCoord.x).absoluteValue }!!
+                chunksToBuild.minByOrNull { (it.z - previousPlayerCoord.z + it.x - previousPlayerCoord.x).absoluteValue }!!
             chunksToBuild.remove(chunkToBuild)
             buildAndAddNewChunk(chunkToBuild)
         }
     }
 
+    private var chunksBuilt = 0
+    private var cutoff = 5
     private fun buildAndAddNewChunk(chunkCoord: PointCoord) {
-        info { "Build new chunk at $chunkCoord, playerCoord: $previousPlayerCoord" }
-        info { "Distance = ${(chunkCoord.z -previousPlayerCoord.z + chunkCoord.x - previousPlayerCoord.x).absoluteValue }"}
-        shouldUpdatedRenderables = true
         val chunk = marchingCubeBuilder.buildChunk(chunkCoord.x, chunkCoord.y, chunkCoord.z).apply { visible = false }
+        chunksBuilt++
         chunks.add(chunk)
         sceneManager.addScene(chunk.scene)
+        if (chunksBuilt > cutoff) {
+            chunksBuilt = 0
+            shouldUpdatedRenderables = true
+        }
         if (addCollisionBodies) {
             chunk.initRigidBody()
             world.addRigidBody(chunk.rigidBody)
@@ -66,7 +70,7 @@ class WorldManager(
 
     private var previousChunkDirX = -1000
     private var previousChunkDirZ = -1000
-    private var previousPlayerCoord = PointCoord(1000,1000,1000)
+    private var previousPlayerCoord = PointCoord(1000, 1000, 1000)
     private val chunkCoordsToShow = mutableSetOf<PointCoord>()
     var shouldUpdatedRenderables = true
         private set
@@ -74,15 +78,15 @@ class WorldManager(
     private var toAdd = GdxArray<Scene>()
     private var toRemove = GdxArray<Scene>()
     private val toAddAndToRemove = Pair(toRemove, toAdd)
-    fun getScenesToRender(): Pair<GdxArray<Scene>,GdxArray<Scene>> {
+    fun getScenesToRender(): Pair<GdxArray<Scene>, GdxArray<Scene>> {
         if (shouldUpdatedRenderables) {
             shouldUpdatedRenderables = false
             toRemove.clear()
             chunks.filter { chunk ->
                 chunk.visible &&
-                chunkCoordsToShow.none {
-                    it == chunk.chunkCoord
-                }
+                    chunkCoordsToShow.none {
+                        it == chunk.chunkCoord
+                    }
             }.forEach {
                 toRemove.add(it.scene)
                 it.visible = false
@@ -90,14 +94,20 @@ class WorldManager(
             toAdd.clear()
             chunks.filter { chunk ->
                 !chunk.visible &&
-                chunkCoordsToShow.any { it == chunk.chunkCoord } }.forEach {
+                    chunkCoordsToShow.any { it == chunk.chunkCoord }
+            }.forEach {
                 toAdd.add(it.scene)
-                it.visible = true }
+                it.visible = true
+            }
         }
         return toAddAndToRemove
     }
 
-    val chunksToBuild = mutableSetOf<PointCoord>()
+    private val chunksToBuild = mutableSetOf<PointCoord>()
+
+    val xExtent = 4
+    val yExtent = 4
+    val zExtent = 8
 
     fun expandTheWorld(motionState: MotionState) {
         val position = motionState.position
@@ -114,7 +124,7 @@ class WorldManager(
             currentPlayerCoord != previousPlayerCoord || //Have we left this chunk?
             chunkDirX != previousChunkDirX || // Are we facing another direction?
             chunkDirZ != previousChunkDirZ
-            ) {
+        ) {
             info { "entering new chunk" }
             previousChunkDirX = chunkDirX
             previousChunkDirZ = chunkDirZ
@@ -124,9 +134,9 @@ class WorldManager(
             shouldUpdatedRenderables = true
 
             //Do it 3 by 3 to start off
-            for (x in -4..4) // Left-right
-                for (y in -3..3) // Up-down
-                    for (z in -8..2) { // forwards only
+            for (x in -xExtent..xExtent) // Left-right
+                for (y in -yExtent..yExtent) // Up-down
+                    for (z in -zExtent..1) { // forwards only
                         val point = currentPlayerCoord.add(x + chunkDirX * x, y, z + z * chunkDirZ)
                         chunkCoordsToShow.add(point)
                     }
@@ -134,63 +144,16 @@ class WorldManager(
             /**
              * Check if all these coordinates exist in the list of chunks!
              */
-            chunksToBuild // Who cares if everything is actually built, eh?
-            for (x in -4..4) // Left-right
-                for (y in -3..3) // Up-down
-                    for (z in -15..2) { // forwards only
+            for (x in -(xExtent * 1.5f).toInt()..(xExtent * 1.5f).toInt()) // Left-right
+                for (y in -(yExtent * 1.5f).toInt()..(yExtent * 1.5f).toInt()) // Up-down
+                    for (z in -(zExtent*1.5f).toInt()..2) { // forwards only
                         val point = currentPlayerCoord.add(x + chunkDirX * x, y, z + z * chunkDirZ)
-                        if(chunks.none {
+                        if (chunks.none {
                                 it.chunkCoord == point
                             }) {
                             chunksToBuild.add(point)
                         }
                     }
-
-//            chunkCoordsToShow.filter { pointCoord ->
-//                chunks.none {
-//                    it.chunkCoord == pointCoord
-//                }
-//            }.forEach {
-//                chunksToBuild.add(it)
-//            }
-        }
-
-        /**
-         * We should simply create a cube in front of the player:
-         * From the back:
-         *
-         * CCCCC
-         * CCPCC
-         * CCCCC
-         *
-         * From the side
-         *
-         * CCC
-         * CCP
-         * CCC
-         *
-         * To begin with, then we can figure out the rest later. This means
-         * that we will render 2 chunks in front of  the player, all we have to do is figure out what
-         * "in front of the player" means.
-         *
-         * So, we shall construct a min-max type of thing of what cubes we need to have. it will emanate from
-         * the x and z of the direction
-         */
-
-
-    }
-
-    fun hideChunk(chunk: MarchingChunk) {
-        if (chunk.visible) {
-            sceneManager.removeScene(chunk.scene)
-            chunk.visible = false
-        }
-    }
-
-    fun showChunk(chunk: MarchingChunk) {
-        if (chunk.hidden) {
-            sceneManager.addScene(chunk.scene)
-            chunk.visible = true
         }
     }
 }

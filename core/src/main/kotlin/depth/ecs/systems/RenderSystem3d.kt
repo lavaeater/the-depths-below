@@ -45,7 +45,7 @@ class RenderSystem3d(
     private fun renderScenes(deltaTime: Float) {
         if(worldManager.shouldUpdatedRenderables) {
             val toAddAndToRemove = worldManager.getScenesToRender()
-            sceneManager.renderableProviders.removeAll(toAddAndToRemove.first)
+            sceneManager.renderableProviders.removeAll(toAddAndToRemove.first, true)
             sceneManager.renderableProviders.addAll(toAddAndToRemove.second)
         }
 

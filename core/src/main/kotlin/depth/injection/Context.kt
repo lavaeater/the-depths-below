@@ -91,8 +91,8 @@ object Context : InjectionContext() {
         val brdfLUT = Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"))
 
         sceneManager.environment.apply {
-            set(ColorAttribute(ColorAttribute.Fog, Color(0f, 0f, 0.2f, 1f)))
-            set(FogAttribute(FogAttribute.FogEquation).set(25f, 500f, 10f))
+            set(ColorAttribute(ColorAttribute.Fog, Color(0.2f, 0.2f, 0.5f, 0.5f)))
+            set(FogAttribute(FogAttribute.FogEquation).set(1f, 400f, 0.7f))
             set(ColorAttribute(ColorAttribute.AmbientLight, 0f, 0f, .3f, 1f))
             add(DirectionalShadowLight().apply {
                 set(1f, 1f, 1f, -1f, -1f, 0f)
