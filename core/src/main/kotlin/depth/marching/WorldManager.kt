@@ -8,17 +8,20 @@ import ktx.collections.toGdxArray
 import ktx.log.info
 import net.mgsx.gltf.scene3d.scene.Scene
 import net.mgsx.gltf.scene3d.scene.SceneManager
+import kotlin.math.absoluteValue
 
 class WorldManager(
     private val marchingCubeBuilder: MarchingCubeBuilder,
     private val sceneManager: SceneManager,
     private val world: btDynamicsWorld,
+    private var someFactor: Int = 5,
     private val addCollisionBodies: Boolean = false
 ) {
     private val chunks = mutableListOf<MarchingChunk>()
     fun generateChunks(size: Int) {
         //This was an honest mistake, but a very cool one - I used power of 2 instead of just multiplying by 2!
-        Joiser.numberOfPoints = size.pow(2) * marchingCubeBuilder.numberOfPoints
+        Joiser.numberOfPoints = someFactor.pow(2) * marchingCubeBuilder.numberOfPoints
+//        Joiser.numberOfPoints = size.pow(2) * marchingCubeBuilder.numberOfPoints
 
 
         (-size until size).map { x ->
@@ -39,8 +42,18 @@ class WorldManager(
         }
     }
 
-    fun buildAndAddNewChunk(chunkCoord: PointCoord) {
-        info { "Build new chunk at $chunkCoord" }
+    fun buildIfNecessary() {
+        if(chunksToBuild.any()) {
+            val chunkToBuild =
+                chunksToBuild.minByOrNull { (it.z -previousPlayerCoord.z + it.x - previousPlayerCoord.x).absoluteValue }!!
+            chunksToBuild.remove(chunkToBuild)
+            buildAndAddNewChunk(chunkToBuild)
+        }
+    }
+
+    private fun buildAndAddNewChunk(chunkCoord: PointCoord) {
+        info { "Build new chunk at $chunkCoord, playerCoord: $previousPlayerCoord" }
+        info { "Distance = ${(chunkCoord.z -previousPlayerCoord.z + chunkCoord.x - previousPlayerCoord.x).absoluteValue }"}
         shouldUpdatedRenderables = true
         val chunk = marchingCubeBuilder.buildChunk(chunkCoord.x, chunkCoord.y, chunkCoord.z).apply { visible = false }
         chunks.add(chunk)
@@ -111,9 +124,9 @@ class WorldManager(
             shouldUpdatedRenderables = true
 
             //Do it 3 by 3 to start off
-            for (x in -5..5) // Left-right
+            for (x in -4..4) // Left-right
                 for (y in -3..3) // Up-down
-                    for (z in -15..2) { // forwards only
+                    for (z in -8..2) { // forwards only
                         val point = currentPlayerCoord.add(x + chunkDirX * x, y, z + z * chunkDirZ)
                         chunkCoordsToShow.add(point)
                     }
@@ -121,14 +134,25 @@ class WorldManager(
             /**
              * Check if all these coordinates exist in the list of chunks!
              */
-            var i = 0
-            chunkCoordsToShow.filter { pointCoord ->
-                chunks.none {
-                    it.chunkCoord == pointCoord
-                }
-            }.forEach {
-                chunksToBuild.add(it)
-            }
+            chunksToBuild // Who cares if everything is actually built, eh?
+            for (x in -4..4) // Left-right
+                for (y in -3..3) // Up-down
+                    for (z in -15..2) { // forwards only
+                        val point = currentPlayerCoord.add(x + chunkDirX * x, y, z + z * chunkDirZ)
+                        if(chunks.none {
+                                it.chunkCoord == point
+                            }) {
+                            chunksToBuild.add(point)
+                        }
+                    }
+
+//            chunkCoordsToShow.filter { pointCoord ->
+//                chunks.none {
+//                    it.chunkCoord == pointCoord
+//                }
+//            }.forEach {
+//                chunksToBuild.add(it)
+//            }
         }
 
         /**

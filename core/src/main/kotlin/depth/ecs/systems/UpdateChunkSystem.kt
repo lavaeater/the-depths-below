@@ -25,11 +25,7 @@ class UpdateChunkSystem(
 
     override fun update(deltaTime: Float) {
         super.update(deltaTime)
-        if(worldManager.chunksToBuild.any()) {
-            val chunkToBuild = worldManager.chunksToBuild.first()
-            worldManager.chunksToBuild.remove(chunkToBuild)
-            worldManager.buildAndAddNewChunk(chunkToBuild)
-        }
+        worldManager.buildIfNecessary()
     }
 
     private val tmpVector = vec3()
