@@ -20,8 +20,7 @@ class WorldManager(
     private val chunks = mutableListOf<MarchingChunk>()
     fun generateChunks(size: Int) {
         //This was an honest mistake, but a very cool one - I used power of 2 instead of just multiplying by 2!
-        Joiser.numberOfPoints = someFactor.pow(2) * marchingCubeBuilder.numberOfPoints
-//        Joiser.numberOfPoints = size.pow(2) * marchingCubeBuilder.numberOfPoints
+        Joiser.numberOfPoints = size * 2 * marchingCubeBuilder.numberOfPoints
 
 
         (-size until size).map { x ->
@@ -72,7 +71,7 @@ class WorldManager(
     private var previousChunkDirZ = -1000
     private var previousPlayerCoord = PointCoord(1000, 1000, 1000)
     private val chunkCoordsToShow = mutableSetOf<PointCoord>()
-    var shouldUpdatedRenderables = true
+    var shouldUpdatedRenderables = false
         private set
 
     private var toAdd = GdxArray<Scene>()
