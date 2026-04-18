@@ -33,68 +33,68 @@ class SubmarineControlSystem(
     private val controlMap = command("Controoool") {
         setUp(
             Keys.P,
-            "Move In"
+            "Toggle Points"
         ) {
             marchingCubeBuilder.togglePoints()
         }
         setUp(
             Keys.B,
-            "Move In"
+            "Toggle Started"
         ) {
             marchingCubeBuilder.toggleStarted()
         }
         setUp(
             Keys.SPACE,
-            "Move In"
+            "Update Model"
         ) {
             marchingCubeBuilder.updateModel()
         }
         setUp(
-            Keys.W,
+            Keys.U,
             "Move In"
         ) {
             marchingCubeBuilder.moveIn()
         }
         setUp(
-            Keys.S,
+            Keys.J,
             "Move Out"
         ) {
             marchingCubeBuilder.moveOut()
         }
         setUp(
-            Keys.A,
+            Keys.H,
             "Move Left"
         ) {
             marchingCubeBuilder.moveLeft()
         }
         setUp(
-            Keys.D,
+            Keys.L,
             "Move Right"
         ) {
             marchingCubeBuilder.moveRight()
         }
         setUp(
-            Keys.UP,
+            Keys.Y,
             "Move Up"
         ) {
             marchingCubeBuilder.moveUp()
         }
         setUp(
-            Keys.DOWN,
-            "Move DOwn"
+            Keys.I,
+            "Move Down"
         ) {
             marchingCubeBuilder.moveDown()
         }
 
         setUp(
-            Keys.RIGHT,
-            "Move Up"
+            Keys.M,
+            "Index Up"
         ) {
             marchingCubeBuilder.indexUp()
         }
         setUp(
-            Keys.LEFT,
-            "Move DOwn"
+            Keys.N,
+            "Index Down"
         ) {
             marchingCubeBuilder.indexDown()
         }
@@ -124,33 +124,28 @@ class SubmarineControlSystem(
         )
         setBoth(
             Keys.UP,
-            "Up",
+            "Ascend",
             { controlComponent.remove(Direction.Up) },
             { controlComponent.add(Direction.Up) }
         )
         setBoth(
             Keys.DOWN,
-            "Down",
+            "Descend",
             { controlComponent.remove(Direction.Down) },
             { controlComponent.add(Direction.Down) }
         )
         setBoth(
             Keys.LEFT,
-            "Up",
+            "Yaw Left",
             { controlComponent.remove(Rotation.YawLeft) },
             { controlComponent.add(Rotation.YawLeft) }
         )
         setBoth(
             Keys.RIGHT,
-            "Down",
+            "Yaw right",
             { controlComponent.remove(Rotation.YawRight) },
             { controlComponent.add(Rotation.YawRight) }
         )
-        setUp(
-            Keys.P, "Toggle points"
-        ) {
-            marchingCubeBuilder.togglePoints()
-        }
     }
 
     override fun keyDown(keycode: Int): Boolean {

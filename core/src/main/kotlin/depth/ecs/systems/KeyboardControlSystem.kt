@@ -20,19 +20,19 @@ class KeyboardControlSystem(
     private val controlMap = command("Controoool") {
         setUp(
             Keys.P,
-            "Move In"
+            "Toggle Points"
         ) {
             marchingCubeBuilder.togglePoints()
         }
         setUp(
             Keys.B,
-            "Move In"
+            "Toggle Started"
         ) {
             marchingCubeBuilder.toggleStarted()
         }
         setUp(
             Keys.SPACE,
-            "Move In"
+            "Updated Model"
         ) {
             marchingCubeBuilder.updateModel()
         }
