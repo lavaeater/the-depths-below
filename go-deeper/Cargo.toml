@@ -9,14 +9,14 @@ repository = "https://github.com/Tommie Nygren <tommie.nygren@gmail.com>/go-deep
 keywords = ["bevy", "game", "third-person", "topdown", "gamedev"]
 
 [dependencies.bevy]
-version = "0.19"
+version = "0.18.1"
 default-features = false
 features = [
-     "3d",
-     "jpeg",
-     "serialize",
-     "hotpatching",
-     "reflect_auto_register",
+#     "3d",
+#     "jpeg",
+#     "serialize",
+#     "hotpatching",
+#     "reflect_auto_register",
     "default_app",
     "default_platform",
     "3d_api",
@@ -29,8 +29,8 @@ features = [
     "serialize",
     "hotpatching",
     "reflect_auto_register",
-    "bevy_ui_widgets",
-    "bevy_feathers"
+    "experimental_bevy_feathers",
+    "experimental_bevy_ui_widgets",
 ]
 
 [dependencies]
@@ -42,7 +42,7 @@ bevy_skein = "0.5"                                                      # blende
 bevy_third_person_camera = { version = "0.4.0", optional = true }         # 3rd person camera
 bevy_top_down_camera = { version = "0.3", optional = true }             # top down camera
 
-avian3d = { version = "0.7.0", default-features = false, features = ["parry-f32", "3d", "f32"] }
+avian3d = { version = "0.6.1", default-features = false, features = ["parry-f32", "3d", "f32"] }
 bevy_sprinkles = "0.2.0"                                                # 3d particles
 bevy_ahoy =   { version = "0.1.0", default-features = false }      # character controller
 bevy_enhanced_input = { version = "0.24", features = ["serialize"] }    # keyboard/gamepad input
@@ -63,6 +63,7 @@ bevy_yarnspinner = "0.7"
 easy-ext = "1"
 fundsp = "0.20"
 image = "0.25.6"
+noise = "0.9"                                                           # simplex noise for terrain scalar field
 ron = "0.10"
 rand = "0.9"
 serde = "1"

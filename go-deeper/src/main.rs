@@ -21,6 +21,7 @@ pub mod models;
 pub mod player;
 pub mod scene;
 pub mod screens;
+pub mod terrain;
 pub mod third_party;
 pub mod ui;
 
@@ -92,6 +93,7 @@ fn main() {
         player::plugin,
         screens::plugin,
         game::plugin,
+        terrain::plugin,
     ))
     .add_systems(Startup, set_window_icon);
 
