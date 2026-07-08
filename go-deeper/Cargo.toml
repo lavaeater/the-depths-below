@@ -6,19 +6,17 @@ authors = ["Tommie Nygren <tommie.nygren@gmail.com>"]
 license = "MIT OR Apache-2.0"
 exclude = ["assets"]
 repository = "https://github.com/Tommie Nygren <tommie.nygren@gmail.com>/go-deeper"
-keywords = ["bevy", "game", "third person", "topdown", "gamedev"]
+keywords = ["bevy", "game", "third-person", "topdown", "gamedev"]
 
 [dependencies.bevy]
-version = "0.18"
+version = "0.19"
 default-features = false
 features = [
-    # TODO: change to this on 0.19 (thx Jan!)
-    # "3d",
-    # "jpeg",
-    # "serialize",
-    # "hotpatching",
-    # "reflect_auto_register",
-    # opinionated list without bevy_audio
+     "3d",
+     "jpeg",
+     "serialize",
+     "hotpatching",
+     "reflect_auto_register",
     "default_app",
     "default_platform",
     "3d_api",
@@ -31,7 +29,8 @@ features = [
     "serialize",
     "hotpatching",
     "reflect_auto_register",
-    "experimental_bevy_ui_widgets"
+    "bevy_ui_widgets",
+    "bevy_feathers"
 ]
 
 [dependencies]
@@ -40,12 +39,12 @@ bevy_perf_ui = { version = "0.6", optional = true }                     # perfor
 bevy-inspector-egui = { version = "0.36", optional = true }             # entity inspector
 bevy_skein = "0.5"                                                      # blender integration
 
-bevy_third_person_camera = { version = "0.4", optional = true }         # 3rd person camera
+bevy_third_person_camera = { version = "0.4.0", optional = true }         # 3rd person camera
 bevy_top_down_camera = { version = "0.3", optional = true }             # top down camera
 
-avian3d = { version = "0.6.0-rc.1", default-features = false, features = ["parry-f32", "3d", "f32"] }
+avian3d = { version = "0.7.0", default-features = false, features = ["parry-f32", "3d", "f32"] }
 bevy_sprinkles = "0.2.0"                                                # 3d particles
-bevy_ahoy =   { version = "0.1.0-rc.6", default-features = false }      # character controller
+bevy_ahoy =   { version = "0.1.0", default-features = false }      # character controller
 bevy_enhanced_input = { version = "0.24", features = ["serialize"] }    # keyboard/gamepad input
 
 bevy_shuffle_bag = "0.4"                                                # deterministically random container
