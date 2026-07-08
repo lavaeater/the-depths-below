@@ -8,10 +8,12 @@ mod control;
 mod input;
 mod particles;
 mod sound;
+mod submarine;
 
 pub use animation::*;
 pub use control::*;
 pub use input::*;
+pub use submarine::*;
 
 /// This plugin handles player related stuff like movement, shooting
 /// Player logic is only active during the State `Screen::Playing`
@@ -22,6 +24,7 @@ pub fn plugin(app: &mut App) {
         animation::plugin,
         input::plugin,
         particles::plugin,
+        submarine::plugin,
     ))
     .add_systems(OnEnter(Screen::Gameplay), spawn_player)
     .add_observer(player_post_spawn);
@@ -37,11 +40,16 @@ pub fn spawn_player(
     // mut meshes: ResMut<Assets<Mesh>>,
     // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let Some(gltf) = gltf_assets.get(&models.player) else {
+    // Keep the player model as a load guard so animation clips are ready by spawn time.
+    let Some(_player_gltf) = gltf_assets.get(&models.player) else {
+        return;
+    };
+    // Use the submarine model (ported from the Kotlin game) as the visible body.
+    let Some(sub_gltf) = gltf_assets.get(&models.submarine) else {
         return;
     };
 
-    let mesh = SceneRoot(gltf.scenes[0].clone());
+    let mesh = SceneRoot(sub_gltf.scenes[0].clone());
     let pos = Vec3::from(cfg.player.spawn_pos);
     let pos = Transform::from_translation(pos);
     let hitbox = Capsule3d::new(cfg.player.hitbox.radius, cfg.player.hitbox.height);
@@ -53,15 +61,8 @@ pub fn spawn_player(
             pos,
             Player::default(),
             PreviousPosition(pos.translation),
-            CharacterController {
-                crouch_height: 2.0,
-                gravity: cfg.physics.gravity,
-                speed: cfg.player.movement.speed(),
-                max_speed: cfg.player.movement.max_speed,
-                crouch_speed_scale: cfg.player.movement.crouch_factor,
-                jump_height: cfg.player.movement.jump_height,
-                ..default()
-            },
+            // Submarine flight instead of the RPG character controller (see `submarine.rs`).
+            submarine_physics(),
             collider,
             // other player related components
             StepTimer(Timer::from_seconds(cfg.timers.step, TimerMode::Repeating)),

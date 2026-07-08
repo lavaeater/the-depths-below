@@ -21,7 +21,7 @@ fn movement(
     cfg: Res<Config>,
     movement: Query<&Action<Movement>>,
     camera: Single<&Transform, With<SceneCamera>>,
-    mut player_q: Query<(&mut Transform, &mut CharacterLook), Without<SceneCamera>>,
+    mut player_q: Query<(&mut Transform, &mut CharacterLook), (Without<SceneCamera>, Without<Submarine>)>,
 ) {
     for movement in movement.iter() {
         let movement = *movement;
