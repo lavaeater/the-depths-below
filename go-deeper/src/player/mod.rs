@@ -33,6 +33,7 @@ pub fn plugin(app: &mut App) {
 pub fn spawn_player(
     cfg: Res<Config>,
     models: Res<Models>,
+    field: Res<terrain::TerrainField>,
     gltf_assets: Res<Assets<Gltf>>,
     #[cfg(feature = "fpv")] camera: Single<Entity, With<SceneCamera>>,
     mut commands: Commands,
@@ -50,8 +51,9 @@ pub fn spawn_player(
     };
 
     let mesh = SceneRoot(sub_gltf.scenes[0].clone());
-    let pos = Vec3::from(cfg.player.spawn_pos);
-    let pos = Transform::from_translation(pos);
+    // Nudge the spawn to open water so the sub never starts embedded in terrain.
+    let desired = Vec3::from(cfg.player.spawn_pos);
+    let pos = Transform::from_translation(terrain::find_open_spawn(field.0.as_ref(), desired));
     let hitbox = Capsule3d::new(cfg.player.hitbox.radius, cfg.player.hitbox.height);
     let collider = Collider::from(hitbox);
 
