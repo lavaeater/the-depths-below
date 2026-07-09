@@ -85,6 +85,10 @@ fn setup_terrain(mut commands: Commands, mut materials: ResMut<Assets<StandardMa
     let material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.3, 0.55, 0.4),
         perceptual_roughness: 0.9,
+        // Render walls from both sides so cave interiors (and any wall the sub is next to)
+        // are visible — otherwise back-face culling makes them look invisible from inside.
+        cull_mode: None,
+        double_sided: true,
         ..default()
     });
     commands.insert_resource(TerrainMaterial(material));
@@ -169,8 +173,8 @@ fn stream_chunks(
     }
 }
 
-/// Returns true when a cell is fully open water (all 8 corners empty), so the submarine can
-/// float there without intersecting any surface.
+/// Returns true when a cell is fully open water (all 8 corners empty), so nothing solid
+/// passes through it.
 fn cell_is_open(field: &dyn ScalarField, cell: IVec3) -> bool {
     marching::CORNER_OFFSET.iter().all(|offset| {
         let c = cell + *offset;
@@ -178,10 +182,29 @@ fn cell_is_open(field: &dyn ScalarField, cell: IVec3) -> bool {
     })
 }
 
-/// Find an open spawn position near `near` so the submarine never starts inside rock. Scans
-/// outward (nearest-first) for a fully-open cell; falls back to `near` if none is found.
+/// Required open clearance (in cells) around a spawn cell so the sub starts in a genuine
+/// pocket, not right up against a wall.
+const SPAWN_CLEARANCE: i32 = 1;
+
+/// True when `cell` and every cell within [`SPAWN_CLEARANCE`] of it are fully open.
+fn region_is_open(field: &dyn ScalarField, cell: IVec3) -> bool {
+    for dx in -SPAWN_CLEARANCE..=SPAWN_CLEARANCE {
+        for dy in -SPAWN_CLEARANCE..=SPAWN_CLEARANCE {
+            for dz in -SPAWN_CLEARANCE..=SPAWN_CLEARANCE {
+                if !cell_is_open(field, cell + IVec3::new(dx, dy, dz)) {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+/// Find an open spawn position near `near` so the submarine never starts inside — or right
+/// against — a structure. Scans outward (nearest-first) for a cell with open clearance all
+/// around it; falls back to `near` if none is found.
 pub fn find_open_spawn(field: &dyn ScalarField, near: Vec3) -> Vec3 {
-    const MAX_RADIUS: i32 = 24;
+    const MAX_RADIUS: i32 = 32;
     let start = (near / SIDE_LENGTH).floor().as_ivec3();
 
     for r in 0..=MAX_RADIUS {
@@ -193,7 +216,7 @@ pub fn find_open_spawn(field: &dyn ScalarField, near: Vec3) -> Vec3 {
                         continue;
                     }
                     let cell = start + IVec3::new(dx, dy, dz);
-                    if cell_is_open(field, cell) {
+                    if region_is_open(field, cell) {
                         // Center of the open cell.
                         return (cell.as_vec3() + Vec3::splat(0.5)) * SIDE_LENGTH;
                     }
