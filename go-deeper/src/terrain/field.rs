@@ -9,10 +9,11 @@
 //! always 0 and `nu` is dropped here). Swap in a true 6D simplex later if seams show —
 //! everything downstream only talks to the [`ScalarField`] trait.
 
+use bevy::math::IVec3;
 use noise::{NoiseFn, Simplex};
 use std::f64::consts::TAU;
 
-use super::{NOISE_PERIOD, NOISE_SCALE, NOISE_SEED, SOLID_THRESHOLD};
+use super::{NOISE_PERIOD, NOISE_SCALE, NOISE_SEED, POINTS_PER_CHUNK, SOLID_THRESHOLD, START_CHUNK};
 
 /// Anything that can answer "is this integer grid point inside solid terrain?".
 pub trait ScalarField: Send + Sync {
@@ -78,5 +79,42 @@ impl ScalarField for JoiseField {
 
         // Simplex returns roughly [-1, 1]; ModuleAutoCorrect normalized to [0, 1].
         ((v + 1.0) * 0.5) as f32
+    }
+}
+
+/// Wraps another field and forces one chunk to be fully open water, giving the submarine a
+/// clean starting cavern instead of spawning inside rock.
+pub struct CarvedField<F: ScalarField> {
+    base: F,
+    carved_chunk: IVec3,
+}
+
+impl<F: ScalarField> CarvedField<F> {
+    pub fn new(base: F, carved_chunk: IVec3) -> Self {
+        Self { base, carved_chunk }
+    }
+}
+
+impl Default for CarvedField<JoiseField> {
+    fn default() -> Self {
+        Self::new(JoiseField::default(), START_CHUNK)
+    }
+}
+
+impl<F: ScalarField> ScalarField for CarvedField<F> {
+    fn value(&self, x: i32, y: i32, z: i32) -> f32 {
+        self.base.value(x, y, z)
+    }
+
+    fn is_solid(&self, x: i32, y: i32, z: i32) -> bool {
+        let chunk = IVec3::new(
+            x.div_euclid(POINTS_PER_CHUNK),
+            y.div_euclid(POINTS_PER_CHUNK),
+            z.div_euclid(POINTS_PER_CHUNK),
+        );
+        if chunk == self.carved_chunk {
+            return false;
+        }
+        self.base.is_solid(x, y, z)
     }
 }

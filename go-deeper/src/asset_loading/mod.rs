@@ -52,8 +52,6 @@ pub struct Models {
     pub player: Handle<Gltf>,
     #[dependency]
     pub submarine: Handle<Gltf>,
-    #[dependency]
-    pub entry_scene: Handle<Gltf>,
 }
 
 impl FromWorld for Models {
@@ -63,7 +61,6 @@ impl FromWorld for Models {
             player: assets.load("models/player.glb"),
             // Ported from the Kotlin game (`depth/injection/Assets.kt`).
             submarine: assets.load("models/submarine3.gltf"),
-            entry_scene: assets.load("models/scene.gltf"),
         }
     }
 }

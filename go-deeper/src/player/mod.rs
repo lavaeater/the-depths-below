@@ -51,8 +51,8 @@ pub fn spawn_player(
     };
 
     let mesh = SceneRoot(sub_gltf.scenes[0].clone());
-    // Nudge the spawn to open water so the sub never starts embedded in terrain.
-    let desired = Vec3::from(cfg.player.spawn_pos);
+    // Spawn in the middle of the carved-open start chunk (find_open_spawn is a safety net).
+    let desired = (terrain::START_CHUNK.as_vec3() + Vec3::splat(0.5)) * terrain::CHUNK_WORLD_SIZE;
     let pos = Transform::from_translation(terrain::find_open_spawn(field.0.as_ref(), desired));
     let hitbox = Capsule3d::new(cfg.player.hitbox.radius, cfg.player.hitbox.height);
     let collider = Collider::from(hitbox);
@@ -73,6 +73,21 @@ pub fn spawn_player(
         .with_children(|parent| {
             let mut e = parent.spawn((mesh, Transform::from_xyz(0.0, -1.0, 0.0)));
             e.observe(prepare_animations);
+
+            // Forward-facing headlight (shines along the sub's local -Z), lighting the caves
+            // ahead — mirrors the Kotlin game's submarine PointLight.
+            parent.spawn((
+                SpotLight {
+                    intensity: 4_000_000.0,
+                    range: 400.0,
+                    outer_angle: 0.6,
+                    inner_angle: 0.35,
+                    color: Color::srgb(0.85, 0.95, 1.0),
+                    shadows_enabled: false,
+                    ..default()
+                },
+                Transform::default(),
+            ));
 
             // DEBUG
             // let collider_mesh = Mesh::from(hitbox);

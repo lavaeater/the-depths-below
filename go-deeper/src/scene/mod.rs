@@ -15,60 +15,32 @@
 //! ```
 //! more on that here: <https://bevyskein.dev/docs/migration-tools>
 //! Scene logic is only active during the State `Screen::Playing`
-use crate::{asset_loading::Particles, *};
-use bevy::scene::SceneInstanceReady;
-use bevy_sprinkles::prelude::*;
+use crate::*;
 
 mod cosmic_sphere;
 mod screen_fade;
 mod skybox;
+mod underwater;
 pub use cosmic_sphere::*;
 pub use screen_fade::*;
 pub use skybox::*;
 
 pub fn plugin(app: &mut App) {
-    app.add_plugins((skybox::plugin, screen_fade::plugin, cosmic_sphere::plugin));
+    app.add_plugins((
+        skybox::plugin,
+        screen_fade::plugin,
+        cosmic_sphere::plugin,
+        underwater::plugin,
+    ));
 }
 
-pub fn spawn_level(models: Res<Models>, gltf_assets: Res<Assets<Gltf>>, mut commands: Commands) {
-    let Some(scene) = gltf_assets.get(&models.entry_scene) else {
-        return;
-    };
-    commands
-        .spawn((
-            SceneRoot(scene.scenes[0].clone()),
-            Transform::from_scale(Vec3::splat(1.0)),
-        ))
-        .observe(attach_particles)
-        .observe(setup_cosmic_sphere);
-
-    // to see something when suns go away
+/// Spawn the (empty) underwater level. The original demo environment model, cosmic sphere and
+/// mood particles have been removed — the world is the procedural terrain plus the submarine.
+pub fn spawn_level(mut commands: Commands) {
+    // A little ambient so caves aren't pitch black before the underwater lighting kicks in.
     commands.insert_resource(GlobalAmbientLight {
         color: Color::WHITE,
         brightness: 500.0,
         ..Default::default()
     });
-}
-
-fn attach_particles(
-    _: On<SceneInstanceReady>,
-    moods: Query<(Entity, &Mood)>,
-    transforms: Query<&Transform>,
-    particles: Res<Particles>,
-    mut commands: Commands,
-) {
-    for (e, mood) in moods.iter() {
-        if let Ok(transform) = transforms.get(e) {
-            let mut pos = *transform;
-            pos.scale = Vec3::new(0.2, 2.0, 0.2);
-
-            let handle = match mood {
-                Mood::Exploration => particles.healing_zone.clone(),
-                Mood::Combat => particles.sun_floor.clone(),
-            };
-            commands.entity(e).with_children(|parent| {
-                parent.spawn((pos, ParticleSystem3D { handle }));
-            });
-        }
-    }
 }

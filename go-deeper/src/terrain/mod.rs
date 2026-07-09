@@ -11,7 +11,7 @@ pub mod field;
 pub mod marching;
 pub mod tables;
 
-use field::{JoiseField, ScalarField};
+use field::{CarvedField, ScalarField};
 
 // ---- Terrain constants (mirroring `DeepGameSettings` / `Joiser` / the Context wiring) ----
 
@@ -42,6 +42,9 @@ pub const CHUNKS_PER_FRAME: i32 = 4;
 /// World size of one chunk along an axis.
 pub const CHUNK_WORLD_SIZE: f32 = POINTS_PER_CHUNK as f32 * SIDE_LENGTH;
 
+/// The chunk carved fully open at game start, so the sub begins in clear water (temporary).
+pub const START_CHUNK: IVec3 = IVec3::ZERO;
+
 /// Marks a spawned terrain chunk entity.
 #[derive(Component, Debug, Clone, Copy)]
 pub struct TerrainChunk(pub IVec3);
@@ -52,7 +55,7 @@ pub struct TerrainField(pub Box<dyn ScalarField>);
 
 impl Default for TerrainField {
     fn default() -> Self {
-        Self(Box::new(JoiseField::default()))
+        Self(Box::new(CarvedField::default()))
     }
 }
 
