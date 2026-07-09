@@ -8,7 +8,7 @@
 //! triangle) and vertices are duplicated per triangle, matching the original.
 
 use bevy::asset::RenderAssetUsages;
-use bevy::mesh::{Mesh, PrimitiveTopology};
+use bevy::mesh::{Indices, Mesh, PrimitiveTopology};
 use bevy::prelude::*;
 
 use super::field::ScalarField;
@@ -103,9 +103,12 @@ pub fn mesh_from_positions(positions: Vec<Vec3>) -> Option<Mesh> {
         PrimitiveTopology::TriangleList,
         RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
     );
+    // Sequential indices for the triangle soup so avian can build a trimesh collider.
+    let indices: Vec<u32> = (0..verts.len() as u32).collect();
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verts);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_indices(Indices::U32(indices));
     Some(mesh)
 }
 

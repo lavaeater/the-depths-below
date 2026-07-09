@@ -68,13 +68,18 @@ fn spawn_terrain_spike(
                 let Some(mesh) = marching::build_chunk_mesh(field.0.as_ref(), coord) else {
                     continue;
                 };
-                commands.spawn((
+                // Static trimesh collider so the submarine can't fly through the rock.
+                let collider = Collider::trimesh_from_mesh(&mesh);
+                let mut entity = commands.spawn((
                     DespawnOnExit(Screen::Gameplay),
                     TerrainChunk(coord),
                     Mesh3d(meshes.add(mesh)),
                     MeshMaterial3d(material.clone()),
                     Transform::IDENTITY,
                 ));
+                if let Some(collider) = collider {
+                    entity.insert((RigidBody::Static, collider));
+                }
                 spawned += 1;
             }
         }
