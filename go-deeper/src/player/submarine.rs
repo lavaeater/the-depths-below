@@ -35,6 +35,10 @@ pub const CAM_HEIGHT: f32 = 10.0;
 pub const CAM_LOOK_AHEAD: f32 = 8.0;
 /// Camera position smoothing rate (higher = snappier).
 pub const CAM_SMOOTH: f32 = 8.0;
+/// Gap kept between the camera and any wall it's pulled up against.
+pub const CAM_WALL_BUFFER: f32 = 3.0;
+/// Camera never comes closer to the sub than this (avoids clipping into the sub on tight pull-ins).
+pub const CAM_MIN_DISTANCE: f32 = 4.0;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(
@@ -116,13 +120,16 @@ fn submarine_control(
 }
 
 /// Fixed chase camera: keeps the `SceneCamera` behind and above the submarine, looking
-/// slightly ahead of it, so the view follows the sub's heading without manual control.
+/// slightly ahead of it, so the view follows the sub's heading without manual control. A
+/// raycast from the sub to the camera pulls it in when terrain is in the way, so we never
+/// see through walls.
 fn follow_camera(
     time: Res<Time>,
-    subs: Query<&Transform, With<Submarine>>,
+    spatial: SpatialQuery,
+    subs: Query<(Entity, &Transform), With<Submarine>>,
     mut cam: Query<&mut Transform, (With<SceneCamera>, Without<Submarine>)>,
 ) {
-    let Ok(sub) = subs.single() else {
+    let Ok((sub_entity, sub)) = subs.single() else {
         return;
     };
     let Ok(mut cam) = cam.single_mut() else {
@@ -130,10 +137,25 @@ fn follow_camera(
     };
 
     let forward = *sub.forward();
-    let desired = sub.translation - forward * CAM_DISTANCE + Vec3::Y * CAM_HEIGHT;
+    let free = sub.translation - forward * CAM_DISTANCE + Vec3::Y * CAM_HEIGHT;
 
     // Exponential smoothing so the camera eases through turns instead of snapping.
     let t = (time.delta_secs() * CAM_SMOOTH).clamp(0.0, 1.0);
-    cam.translation = cam.translation.lerp(desired, t);
+    let mut target = cam.translation.lerp(free, t);
+
+    // Wall avoidance: if terrain sits between the sub and the (smoothed) camera position,
+    // pull the camera in to just short of that wall.
+    let pivot = sub.translation;
+    let offset = target - pivot;
+    let dist = offset.length();
+    if let Ok(dir) = Dir3::new(offset) {
+        let filter = SpatialQueryFilter::default().with_excluded_entities([sub_entity]);
+        if let Some(hit) = spatial.cast_ray(pivot, dir, dist, true, &filter) {
+            let pulled = (hit.distance - CAM_WALL_BUFFER).max(CAM_MIN_DISTANCE);
+            target = pivot + *dir * pulled;
+        }
+    }
+
+    cam.translation = target;
     cam.look_at(sub.translation + forward * CAM_LOOK_AHEAD, Vec3::Y);
 }

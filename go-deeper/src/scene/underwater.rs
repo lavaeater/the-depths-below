@@ -7,18 +7,14 @@ use super::*;
 use bevy::light::AtmosphereEnvironmentMapLight;
 use bevy::pbr::{Atmosphere, AtmosphereSettings, DistanceFog, FogFalloff};
 
-/// Deep-water background color (also the fog's far color).
+/// Deep-water color, used for BOTH the background and the fog so distant terrain dissolves
+/// seamlessly into the water instead of ending at a visible edge.
 fn water_color() -> Color {
-    Color::srgb(0.015, 0.07, 0.11)
+    Color::srgb(0.02, 0.09, 0.13)
 }
 
-/// Fog tint — a touch brighter than the background so terrain fades into visible water.
-fn fog_color() -> Color {
-    Color::srgb(0.05, 0.18, 0.24)
-}
-
-/// How quickly visibility falls off with distance.
-pub const FOG_DENSITY: f32 = 0.005;
+/// How quickly visibility falls off with distance (squared falloff — see below).
+pub const FOG_DENSITY: f32 = 0.004;
 
 pub fn plugin(app: &mut App) {
     app.insert_resource(ClearColor(water_color()))
@@ -37,8 +33,10 @@ fn go_underwater(
         .remove::<AtmosphereSettings>()
         .remove::<AtmosphereEnvironmentMapLight>()
         .insert(DistanceFog {
-            color: fog_color(),
-            falloff: FogFalloff::Exponential {
+            color: water_color(),
+            // Squared falloff keeps nearby water clear but thickens quickly with distance,
+            // giving that murky "can't see far underwater" feel and hiding chunk pop-in.
+            falloff: FogFalloff::ExponentialSquared {
                 density: FOG_DENSITY,
             },
             ..default()
