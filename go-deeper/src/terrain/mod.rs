@@ -20,7 +20,7 @@ pub const SIDE_LENGTH: f32 = 25.0;
 /// Number of cells along each axis of a chunk (`MarchingCubeBuilder(... , 10, ...)`).
 pub const POINTS_PER_CHUNK: i32 = 10;
 /// A grid point is solid when its field value is below this (`isoValue < 0.55`).
-pub const SOLID_THRESHOLD: f32 = 0.55;
+pub const SOLID_THRESHOLD: f32 = 0.45;
 /// Simplex seed (`ModuleBasisFunction.seed = 14`).
 pub const NOISE_SEED: u32 = 14;
 /// Domain scaling (`ModuleScaleDomain` scale 4.0).
