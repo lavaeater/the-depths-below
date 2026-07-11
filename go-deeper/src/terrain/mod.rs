@@ -11,7 +11,7 @@ pub mod field;
 pub mod marching;
 pub mod tables;
 
-use field::{CarvedField, ScalarField};
+use field::{CarvedField, ScalarField, SeaField};
 
 // ---- Terrain constants (mirroring `DeepGameSettings` / `Joiser` / the Context wiring) ----
 
@@ -27,6 +27,39 @@ pub const NOISE_SEED: u32 = 14;
 pub const NOISE_SCALE: f64 = 4.0;
 /// Default wrap period (`generateChunks(5)` -> `5 * 2 * 10`).
 pub const NOISE_PERIOD: f64 = 100.0;
+
+// ---- Sea-floor FBM density (ported in spirit from Sebastian Lague's `NoiseDensity.compute`) ----
+
+/// Number of FBM octaves.
+pub const SEA_OCTAVES: usize = 5;
+/// Frequency multiplier between octaves.
+pub const SEA_LACUNARITY: f64 = 2.0;
+/// Amplitude multiplier between octaves.
+pub const SEA_PERSISTENCE: f32 = 0.5;
+/// Base noise frequency (per cell).
+pub const SEA_FREQUENCY: f64 = 0.03;
+/// How strongly the noise carves terrain out of the water column.
+pub const SEA_NOISE_WEIGHT: f32 = 9.0;
+/// Erosion-like per-octave weighting (Sebastian's `weightMultiplier`).
+pub const SEA_WEIGHT_MULTIPLIER: f32 = 2.5;
+/// Raises the whole surface — larger = more open water above the sea bed.
+pub const SEA_FLOOR_OFFSET: f32 = 6.0;
+/// Below this height (cells) the world hardens into a solid sea bed.
+pub const SEA_HARD_FLOOR_Y: f32 = -14.0;
+/// How strongly the hard floor forces solidity.
+pub const SEA_HARD_FLOOR_WEIGHT: f32 = 3.0;
+
+// ---- Rendering options ----
+
+/// Smooth density-interpolated surfaces (Sebastian-style) vs the original blocky midpoint
+/// vertices. Flip to `false` for the retro blocky look.
+pub const SMOOTH_TERRAIN: bool = true;
+
+/// World-height range mapped onto the color gradient (below -> deep colors, above -> shallow).
+pub const COLOR_Y_MIN: f32 = -150.0;
+pub const COLOR_Y_MAX: f32 = 150.0;
+/// How much surface slope (normal.y) shifts the sampled color, for cliff/flat variation.
+pub const COLOR_NORMAL_OFFSET: f32 = 25.0;
 
 // ---- Streaming radii (a simpler, symmetric take on `WorldManager`'s forward-biased box) ----
 
@@ -55,7 +88,7 @@ pub struct TerrainField(pub Box<dyn ScalarField>);
 
 impl Default for TerrainField {
     fn default() -> Self {
-        Self(Box::new(CarvedField::default()))
+        Self(Box::new(CarvedField::new(SeaField::default(), START_CHUNK)))
     }
 }
 
@@ -83,7 +116,8 @@ pub fn world_to_chunk(pos: Vec3) -> IVec3 {
 
 fn setup_terrain(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
     let material = materials.add(StandardMaterial {
-        base_color: Color::srgb(0.3, 0.55, 0.4),
+        // White so the per-vertex height gradient (see `marching::mesh_from_positions`) shows.
+        base_color: Color::WHITE,
         perceptual_roughness: 0.9,
         // Render walls from both sides so cave interiors (and any wall the sub is next to)
         // are visible — otherwise back-face culling makes them look invisible from inside.
@@ -141,7 +175,11 @@ fn stream_chunks(
                         continue;
                     }
 
-                    let entity = match marching::build_chunk_mesh(field.0.as_ref(), coord) {
+                    let entity = match marching::build_chunk_mesh(
+                        field.0.as_ref(),
+                        coord,
+                        SMOOTH_TERRAIN,
+                    ) {
                         Some(mesh) => {
                             let collider = Collider::trimesh_from_mesh(&mesh);
                             let mut e = commands.spawn((

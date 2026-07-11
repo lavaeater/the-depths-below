@@ -13,7 +13,7 @@ use bevy::prelude::*;
 
 use super::field::ScalarField;
 use super::tables::{EDGES, TRIANGLE_TABLE};
-use super::{POINTS_PER_CHUNK, SIDE_LENGTH};
+use super::{COLOR_NORMAL_OFFSET, COLOR_Y_MAX, COLOR_Y_MIN, POINTS_PER_CHUNK, SIDE_LENGTH};
 
 /// Corner index -> offset from the cell base, in cell units. This is the game's own corner
 /// numbering (`PointCoord.oldVertexIndexToPointCoordinate`), kept consistent with [`EDGES`].
@@ -37,21 +37,27 @@ fn corner_position(base: Vec3, corner: usize) -> Vec3 {
 /// Generate the triangle-soup positions for a single chunk, in global world space.
 ///
 /// `chunk` is the integer chunk coordinate; cells inside it run over
-/// `[chunk * POINTS_PER_CHUNK, (chunk + 1) * POINTS_PER_CHUNK)`.
-pub fn build_chunk_positions(field: &dyn ScalarField, chunk: IVec3) -> Vec<Vec3> {
+/// `[chunk * POINTS_PER_CHUNK, (chunk + 1) * POINTS_PER_CHUNK)`. When `smooth`, edge vertices
+/// are placed at the density iso-crossing (Sebastian-style); otherwise at the edge midpoint
+/// (the original blocky look).
+pub fn build_chunk_positions(field: &dyn ScalarField, chunk: IVec3, smooth: bool) -> Vec<Vec3> {
     let mut positions = Vec::new();
     let origin = chunk * POINTS_PER_CHUNK;
+    let iso = field.iso();
 
     for lx in 0..POINTS_PER_CHUNK {
         for ly in 0..POINTS_PER_CHUNK {
             for lz in 0..POINTS_PER_CHUNK {
                 let cell = origin + IVec3::new(lx, ly, lz);
 
-                // Build the 8-bit corner-solidity mask.
+                // Sample the density at the 8 corners, and build the solidity mask.
+                let mut vals = [0.0f32; 8];
                 let mut mask = 0usize;
                 for (i, offset) in CORNER_OFFSET.iter().enumerate() {
                     let c = cell + *offset;
-                    if field.is_solid(c.x, c.y, c.z) {
+                    let v = field.value(c.x, c.y, c.z);
+                    vals[i] = v;
+                    if v < iso {
                         mask |= 1 << i;
                     }
                 }
@@ -63,10 +69,20 @@ pub fn build_chunk_positions(field: &dyn ScalarField, chunk: IVec3) -> Vec<Vec3>
 
                 let base = Vec3::new(cell.x as f32, cell.y as f32, cell.z as f32) * SIDE_LENGTH;
                 for edge in edges {
-                    let [from_corner, to_corner] = EDGES[*edge];
-                    let from = corner_position(base, from_corner);
-                    let to = corner_position(base, to_corner);
-                    positions.push(from.lerp(to, 0.5));
+                    let [a, b] = EDGES[*edge];
+                    let pa = corner_position(base, a);
+                    let pb = corner_position(base, b);
+                    let t = if smooth {
+                        let d = vals[b] - vals[a];
+                        if d.abs() < 1e-6 {
+                            0.5
+                        } else {
+                            ((iso - vals[a]) / d).clamp(0.0, 1.0)
+                        }
+                    } else {
+                        0.5
+                    };
+                    positions.push(pa.lerp(pb, t));
                 }
             }
         }
@@ -84,6 +100,7 @@ pub fn mesh_from_positions(positions: Vec<Vec3>) -> Option<Mesh> {
     let mut verts: Vec<[f32; 3]> = Vec::with_capacity(positions.len());
     let mut normals: Vec<[f32; 3]> = Vec::with_capacity(positions.len());
     let mut uvs: Vec<[f32; 2]> = Vec::with_capacity(positions.len());
+    let mut colors: Vec<[f32; 4]> = Vec::with_capacity(positions.len());
 
     for tri in positions.chunks_exact(3) {
         let (a, b, c) = (tri[0], tri[1], tri[2]);
@@ -92,11 +109,11 @@ pub fn mesh_from_positions(positions: Vec<Vec3>) -> Option<Mesh> {
         for &v in tri {
             verts.push([v.x, v.y, v.z]);
             normals.push([normal.x, normal.y, normal.z]);
+            // Simple planar UVs so a tiled texture has something to map to.
+            uvs.push([v.x, v.z]);
+            // Height/slope-based color from the terrain gradient.
+            colors.push(terrain_color(v.y, normal.y));
         }
-        // Simple planar UVs so a tiled texture has something to map to.
-        uvs.push([a.x, a.z]);
-        uvs.push([b.x, b.z]);
-        uvs.push([c.x, c.z]);
     }
 
     let mut mesh = Mesh::new(
@@ -108,11 +125,57 @@ pub fn mesh_from_positions(positions: Vec<Vec3>) -> Option<Mesh> {
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, verts);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
     mesh.insert_indices(Indices::U32(indices));
     Some(mesh)
 }
 
 /// Convenience: generate a chunk's mesh directly. Returns `None` for an empty chunk.
-pub fn build_chunk_mesh(field: &dyn ScalarField, chunk: IVec3) -> Option<Mesh> {
-    mesh_from_positions(build_chunk_positions(field, chunk))
+pub fn build_chunk_mesh(field: &dyn ScalarField, chunk: IVec3, smooth: bool) -> Option<Mesh> {
+    mesh_from_positions(build_chunk_positions(field, chunk, smooth))
+}
+
+/// Linear-RGBA color for a terrain vertex, sampled from a depth gradient by world height
+/// (nudged by surface slope, like Sebastian's `normalOffsetWeight`).
+fn terrain_color(world_y: f32, normal_y: f32) -> [f32; 4] {
+    let h = smoothstep(
+        COLOR_Y_MIN,
+        COLOR_Y_MAX,
+        world_y + normal_y * COLOR_NORMAL_OFFSET,
+    );
+    let [r, g, b] = sample_ramp(h);
+    [r, g, b, 1.0]
+}
+
+fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
+    let t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
+/// Deep-to-shallow color ramp (linear RGB). Deep water blue -> teal -> rocky green -> sandy.
+fn sample_ramp(h: f32) -> [f32; 3] {
+    const STOPS: [(f32, [f32; 3]); 5] = [
+        (0.00, [0.01, 0.03, 0.09]), // deep dark blue
+        (0.35, [0.03, 0.12, 0.22]), // blue
+        (0.60, [0.05, 0.28, 0.26]), // teal
+        (0.82, [0.16, 0.32, 0.14]), // mossy rock
+        (1.00, [0.55, 0.48, 0.30]), // sandy shallows
+    ];
+    let h = h.clamp(0.0, 1.0);
+    let mut i = 0;
+    while i + 1 < STOPS.len() && h > STOPS[i + 1].0 {
+        i += 1;
+    }
+    let (t0, c0) = STOPS[i];
+    let (t1, c1) = STOPS[(i + 1).min(STOPS.len() - 1)];
+    let f = if (t1 - t0).abs() < 1e-6 {
+        0.0
+    } else {
+        ((h - t0) / (t1 - t0)).clamp(0.0, 1.0)
+    };
+    [
+        c0[0] + (c1[0] - c0[0]) * f,
+        c0[1] + (c1[1] - c0[1]) * f,
+        c0[2] + (c1[2] - c0[2]) * f,
+    ]
 }

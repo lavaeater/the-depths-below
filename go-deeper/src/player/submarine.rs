@@ -1,31 +1,39 @@
-//! Submarine flight: impulse-based 6-DOF control, ported (with a control-scheme tweak) from
-//! the Kotlin game's `depth/ecs/systems/SubmarineControlSystem.kt`.
+//! Submarine flight, ported (with a control-scheme tweak) from the Kotlin game's
+//! `SubmarineControlSystem.kt` and Sebastian Lague's `Submarine.cs` (which adds pitch).
 //!
-//! The submarine is a dynamic avian rigid body with gravity disabled (it's neutrally
-//! buoyant) and pitch/roll locked, so it stays level and only yaws. Held keys add velocity
-//! along the body's local axes each fixed step, exactly like the original applied central
-//! impulses; linear/angular damping gives the "moving through water" drag that bleeds the
-//! velocity back off when keys are released.
+//! Orientation (yaw + pitch) is tracked in [`SubmarineOrientation`] and written straight to
+//! the body's rotation each frame — physics never spins the sub, so there's no roll drift and
+//! collisions can't tumble it. Thrust adds velocity along the body's local axes; linear
+//! damping gives the "moving through water" drag.
 //!
-//! Controls: `W/S` forward/reverse, `A/D` yaw left/right, `←/→` strafe, `↑/↓` ascend/descend.
+//! Controls: `W/S` forward/reverse, `A/D` yaw left/right, `←/→` strafe, `↑/↓` pitch up/down.
 //! A fixed chase camera ([`follow_camera`]) sits behind and above the sub and looks slightly
 //! ahead of it, so the view turns with the sub and needs no manual control.
 
 use super::*;
-use avian3d::prelude::*;
 
 /// Marks the player entity as the controllable submarine.
 #[derive(Component, Debug, Default, Clone, Copy)]
 pub struct Submarine;
 
+/// Accumulated heading of the submarine, in radians. We drive the body's rotation from this
+/// directly rather than through the physics solver.
+#[derive(Component, Debug, Default, Clone, Copy)]
+pub struct SubmarineOrientation {
+    pub yaw: f32,
+    pub pitch: f32,
+}
+
 /// Linear acceleration (world units/s²) applied while a thrust key is held.
 pub const THRUST_ACCEL: f32 = 60.0;
-/// Yaw acceleration (rad/s²) applied while a turn key is held.
-pub const YAW_ACCEL: f32 = 3.0;
+/// Yaw turn rate (rad/s) while a turn key is held.
+pub const YAW_RATE: f32 = 1.1;
+/// Pitch turn rate (rad/s) while a pitch key is held.
+pub const PITCH_RATE: f32 = 0.9;
+/// Maximum nose up/down angle (radians, ~75°).
+pub const PITCH_LIMIT: f32 = 1.3;
 /// Drag on linear motion; terminal speed ≈ `THRUST_ACCEL / LINEAR_DAMPING`.
 pub const LINEAR_DAMPING: f32 = 1.2;
-/// Drag on yaw; terminal turn rate ≈ `YAW_ACCEL / ANGULAR_DAMPING`.
-pub const ANGULAR_DAMPING: f32 = 4.0;
 
 /// Chase-camera distance behind the sub.
 pub const CAM_DISTANCE: f32 = 22.0;
@@ -61,30 +69,56 @@ pub fn plugin(app: &mut App) {
 pub fn submarine_physics() -> impl Bundle {
     (
         Submarine,
+        SubmarineOrientation::default(),
         RigidBody::Dynamic,
         GravityScale(0.0),
         LinearDamping(LINEAR_DAMPING),
-        AngularDamping(ANGULAR_DAMPING),
-        // Keep the sub level: only yaw (rotation about Y) is free.
-        LockedAxes::new().lock_rotation_x().lock_rotation_z(),
         LinearVelocity::default(),
         AngularVelocity::default(),
     )
 }
 
-/// Held-key polling: `W/S` forward/reverse, `←/→` strafe, `↑/↓` ascend/descend, `A/D` yaw.
+/// Held-key polling: `W/S` forward/reverse, `←/→` strafe, `↑/↓` pitch up/down, `A/D` yaw.
 fn submarine_control(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
-    mut subs: Query<(&Transform, &mut LinearVelocity, &mut AngularVelocity), With<Submarine>>,
+    mut subs: Query<
+        (
+            &mut SubmarineOrientation,
+            &mut Rotation,
+            &mut LinearVelocity,
+            &mut AngularVelocity,
+        ),
+        With<Submarine>,
+    >,
 ) {
     let dt = time.delta_secs();
 
-    for (transform, mut lin_vel, mut ang_vel) in &mut subs {
-        let forward = *transform.forward();
-        let right = *transform.right();
-        let up = *transform.up();
+    for (mut ori, mut rot, mut lin_vel, mut ang_vel) in &mut subs {
+        // --- Orientation: integrate yaw/pitch from input, write it straight to the body. ---
+        if keys.pressed(KeyCode::KeyA) {
+            ori.yaw += YAW_RATE * dt;
+        }
+        if keys.pressed(KeyCode::KeyD) {
+            ori.yaw -= YAW_RATE * dt;
+        }
+        if keys.pressed(KeyCode::ArrowUp) {
+            ori.pitch += PITCH_RATE * dt;
+        }
+        if keys.pressed(KeyCode::ArrowDown) {
+            ori.pitch -= PITCH_RATE * dt;
+        }
+        ori.pitch = ori.pitch.clamp(-PITCH_LIMIT, PITCH_LIMIT);
 
+        let orientation =
+            Quat::from_axis_angle(Vec3::Y, ori.yaw) * Quat::from_axis_angle(Vec3::X, ori.pitch);
+        rot.0 = orientation;
+        // Cancel any spin the solver picked up from collisions so orientation stays exact.
+        ang_vel.0 = Vec3::ZERO;
+
+        // --- Thrust along the (now pitched) local axes. ---
+        let forward = orientation * Vec3::NEG_Z;
+        let right = orientation * Vec3::X;
         let mut thrust = Vec3::ZERO;
         if keys.pressed(KeyCode::KeyW) {
             thrust += forward;
@@ -98,24 +132,9 @@ fn submarine_control(
         if keys.pressed(KeyCode::ArrowLeft) {
             thrust -= right;
         }
-        if keys.pressed(KeyCode::ArrowUp) {
-            thrust += up;
-        }
-        if keys.pressed(KeyCode::ArrowDown) {
-            thrust -= up;
-        }
         if thrust != Vec3::ZERO {
             lin_vel.0 += thrust.normalize() * THRUST_ACCEL * dt;
         }
-
-        let mut yaw = 0.0;
-        if keys.pressed(KeyCode::KeyA) {
-            yaw += 1.0;
-        }
-        if keys.pressed(KeyCode::KeyD) {
-            yaw -= 1.0;
-        }
-        ang_vel.0.y += yaw * YAW_ACCEL * dt;
     }
 }
 
