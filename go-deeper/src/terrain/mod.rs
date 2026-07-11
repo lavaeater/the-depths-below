@@ -5,7 +5,9 @@
 //! `docs/plan.md` for the porting plan and phase breakdown.
 
 use crate::*;
+use bevy::tasks::{AsyncComputeTaskPool, Task, block_on, futures_lite::future};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub mod field;
 pub mod marching;
@@ -15,10 +17,10 @@ use field::{CarvedField, ScalarField, SeaField};
 
 // ---- Terrain constants (mirroring `DeepGameSettings` / `Joiser` / the Context wiring) ----
 
-/// World size of a single marching-cube cell (`DeepGameSettings.sideLength`).
-pub const SIDE_LENGTH: f32 = 25.0;
-/// Number of cells along each axis of a chunk (`MarchingCubeBuilder(... , 10, ...)`).
-pub const POINTS_PER_CHUNK: i32 = 10;
+/// World size of a single marching-cube cell (smaller = finer detail).
+pub const SIDE_LENGTH: f32 = 16.0;
+/// Number of cells along each axis of a chunk. Higher resolution than the original coarse 10.
+pub const POINTS_PER_CHUNK: i32 = 16;
 /// A grid point is solid when its field value is below this (`isoValue < 0.55`).
 pub const SOLID_THRESHOLD: f32 = 0.45;
 /// Simplex seed (`ModuleBasisFunction.seed = 14`).
@@ -36,18 +38,19 @@ pub const SEA_OCTAVES: usize = 5;
 pub const SEA_LACUNARITY: f64 = 2.0;
 /// Amplitude multiplier between octaves.
 pub const SEA_PERSISTENCE: f32 = 0.5;
-/// Base noise frequency (per cell).
-pub const SEA_FREQUENCY: f64 = 0.03;
-/// How strongly the noise carves terrain out of the water column.
-pub const SEA_NOISE_WEIGHT: f32 = 9.0;
+/// Base noise frequency (per **world unit** — the field samples in world space so terrain
+/// shape is independent of `SIDE_LENGTH`/`POINTS_PER_CHUNK` resolution).
+pub const SEA_FREQUENCY: f64 = 0.0012;
+/// How strongly the noise carves terrain out of the water column (world units).
+pub const SEA_NOISE_WEIGHT: f32 = 225.0;
 /// Erosion-like per-octave weighting (Sebastian's `weightMultiplier`).
 pub const SEA_WEIGHT_MULTIPLIER: f32 = 2.5;
-/// Raises the whole surface — larger = more open water above the sea bed.
-pub const SEA_FLOOR_OFFSET: f32 = 6.0;
-/// Below this height (cells) the world hardens into a solid sea bed.
-pub const SEA_HARD_FLOOR_Y: f32 = -14.0;
-/// How strongly the hard floor forces solidity.
-pub const SEA_HARD_FLOOR_WEIGHT: f32 = 3.0;
+/// Raises the whole surface — larger = more open water above the sea bed (world units).
+pub const SEA_FLOOR_OFFSET: f32 = 150.0;
+/// Below this world height the world hardens into a solid sea bed.
+pub const SEA_HARD_FLOOR_Y: f32 = -350.0;
+/// How strongly the hard floor forces solidity (world units).
+pub const SEA_HARD_FLOOR_WEIGHT: f32 = 75.0;
 
 // ---- Rendering options ----
 
@@ -63,14 +66,15 @@ pub const COLOR_NORMAL_OFFSET: f32 = 25.0;
 
 // ---- Streaming radii (a simpler, symmetric take on `WorldManager`'s forward-biased box) ----
 
-/// Chunks kept loaded around the sub, horizontally.
-pub const LOAD_RADIUS_XZ: i32 = 4;
+/// Chunks kept loaded around the sub, horizontally. ~768 world units at radius 3, well past
+/// the fog distance, so raising it mostly just costs memory.
+pub const LOAD_RADIUS_XZ: i32 = 3;
 /// Chunks kept loaded around the sub, vertically (caves are wider than they are tall).
 pub const LOAD_RADIUS_Y: i32 = 2;
 /// Extra margin before a chunk outside the load radius is despawned (hysteresis).
 pub const UNLOAD_MARGIN: i32 = 1;
-/// Max chunks built per frame, to spread generation cost (mirrors `buildIfNecessary`).
-pub const CHUNKS_PER_FRAME: i32 = 4;
+/// Max chunk-generation tasks spawned per frame (they then run off the main thread).
+pub const CHUNKS_PER_FRAME: i32 = 8;
 
 /// World size of one chunk along an axis.
 pub const CHUNK_WORLD_SIZE: f32 = POINTS_PER_CHUNK as f32 * SIDE_LENGTH;
@@ -82,18 +86,19 @@ pub const START_CHUNK: IVec3 = IVec3::ZERO;
 #[derive(Component, Debug, Clone, Copy)]
 pub struct TerrainChunk(pub IVec3);
 
-/// Holds the scalar field used to generate terrain.
+/// Holds the scalar field used to generate terrain. An `Arc` so it can be cloned into
+/// background generation tasks.
 #[derive(Resource)]
-pub struct TerrainField(pub Box<dyn ScalarField>);
+pub struct TerrainField(pub Arc<dyn ScalarField>);
 
 impl Default for TerrainField {
     fn default() -> Self {
-        Self(Box::new(CarvedField::new(SeaField::default(), START_CHUNK)))
+        Self(Arc::new(CarvedField::new(SeaField::default(), START_CHUNK)))
     }
 }
 
-/// Index of currently-loaded chunk coords -> their entity (empty chunks get a marker entity
-/// so they aren't rebuilt every frame).
+/// Index of currently-loaded chunk coords -> their entity (still-generating and empty chunks
+/// get an entity too, so they aren't queued twice).
 #[derive(Resource, Default)]
 pub struct LoadedChunks(pub HashMap<IVec3, Entity>);
 
@@ -101,11 +106,22 @@ pub struct LoadedChunks(pub HashMap<IVec3, Entity>);
 #[derive(Resource)]
 pub struct TerrainMaterial(pub Handle<StandardMaterial>);
 
+/// The result of generating one chunk off the main thread: its mesh and optional collider,
+/// or `None` for an empty (fully open/solid) chunk.
+type ChunkBuild = Option<(Mesh, Option<Collider>)>;
+
+/// A chunk whose mesh/collider is being generated on the async compute pool.
+#[derive(Component)]
+struct ChunkTask(Task<ChunkBuild>);
+
 pub fn plugin(app: &mut App) {
     app.init_resource::<TerrainField>()
         .init_resource::<LoadedChunks>()
         .add_systems(OnEnter(Screen::Gameplay), setup_terrain)
-        .add_systems(Update, stream_chunks.run_if(in_state(Screen::Gameplay)))
+        .add_systems(
+            Update,
+            (stream_chunks, receive_chunks).run_if(in_state(Screen::Gameplay)),
+        )
         .add_systems(OnExit(Screen::Gameplay), teardown_terrain);
 }
 
@@ -137,10 +153,8 @@ fn teardown_terrain(mut loaded: ResMut<LoadedChunks>) {
 /// chunks that fall outside the keep radius. Ported in spirit from `WorldManager`.
 fn stream_chunks(
     field: Res<TerrainField>,
-    material: Res<TerrainMaterial>,
     subs: Query<&Transform, With<player::Submarine>>,
     mut loaded: ResMut<LoadedChunks>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut commands: Commands,
 ) {
     let Ok(sub) = subs.single() else {
@@ -160,7 +174,9 @@ fn stream_chunks(
         inside
     });
 
-    // Build missing chunks nearest-first, up to the per-frame budget.
+    // Queue missing chunks nearest-first, up to the per-frame budget. Generation runs on the
+    // async compute pool; `receive_chunks` attaches the result when it's ready.
+    let pool = AsyncComputeTaskPool::get();
     let mut budget = CHUNKS_PER_FRAME;
     for r in 0..=LOAD_RADIUS_XZ {
         for dx in -r..=r {
@@ -175,30 +191,22 @@ fn stream_chunks(
                         continue;
                     }
 
-                    let entity = match marching::build_chunk_mesh(
-                        field.0.as_ref(),
-                        coord,
-                        SMOOTH_TERRAIN,
-                    ) {
-                        Some(mesh) => {
-                            let collider = Collider::trimesh_from_mesh(&mesh);
-                            let mut e = commands.spawn((
-                                DespawnOnExit(Screen::Gameplay),
-                                TerrainChunk(coord),
-                                Mesh3d(meshes.add(mesh)),
-                                MeshMaterial3d(material.0.clone()),
-                                Transform::IDENTITY,
-                            ));
-                            if let Some(collider) = collider {
-                                e.insert((RigidBody::Static, collider));
-                            }
-                            e.id()
-                        }
-                        // Empty (fully open or fully solid) chunk: marker so we don't retry it.
-                        None => commands
-                            .spawn((DespawnOnExit(Screen::Gameplay), TerrainChunk(coord)))
-                            .id(),
-                    };
+                    let field = field.0.clone();
+                    let task = pool.spawn(async move {
+                        let mesh = marching::build_chunk_mesh(field.as_ref(), coord, SMOOTH_TERRAIN)?;
+                        let collider = Collider::trimesh_from_mesh(&mesh);
+                        Some((mesh, collider))
+                    });
+
+                    let entity = commands
+                        .spawn((
+                            DespawnOnExit(Screen::Gameplay),
+                            TerrainChunk(coord),
+                            Transform::IDENTITY,
+                            Visibility::default(),
+                            ChunkTask(task),
+                        ))
+                        .id();
                     loaded.0.insert(coord, entity);
 
                     budget -= 1;
@@ -206,6 +214,28 @@ fn stream_chunks(
                         return;
                     }
                 }
+            }
+        }
+    }
+}
+
+/// Attach the mesh + collider to chunks whose background generation finished.
+fn receive_chunks(
+    material: Res<TerrainMaterial>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut tasks: Query<(Entity, &mut ChunkTask)>,
+    mut commands: Commands,
+) {
+    for (entity, mut task) in &mut tasks {
+        let Some(result) = block_on(future::poll_once(&mut task.0)) else {
+            continue;
+        };
+        let mut entity = commands.entity(entity);
+        entity.remove::<ChunkTask>();
+        if let Some((mesh, collider)) = result {
+            entity.insert((Mesh3d(meshes.add(mesh)), MeshMaterial3d(material.0.clone())));
+            if let Some(collider) = collider {
+                entity.insert((RigidBody::Static, collider));
             }
         }
     }

@@ -17,7 +17,7 @@ use std::f64::consts::TAU;
 use super::{
     NOISE_PERIOD, NOISE_SCALE, NOISE_SEED, POINTS_PER_CHUNK, SEA_FLOOR_OFFSET, SEA_FREQUENCY,
     SEA_HARD_FLOOR_WEIGHT, SEA_HARD_FLOOR_Y, SEA_LACUNARITY, SEA_NOISE_WEIGHT, SEA_OCTAVES,
-    SEA_PERSISTENCE, SEA_WEIGHT_MULTIPLIER, SOLID_THRESHOLD,
+    SEA_PERSISTENCE, SEA_WEIGHT_MULTIPLIER, SIDE_LENGTH, SOLID_THRESHOLD,
 };
 
 /// Anything that can answer "is this integer grid point inside solid terrain?".
@@ -118,9 +118,11 @@ impl SeaField {
         }
     }
 
-    /// Ridged fractal noise, `>= 0`.
+    /// Ridged fractal noise, `>= 0`. Samples in world space so the terrain's shape doesn't
+    /// change when the voxel resolution does.
     fn fbm(&self, x: i32, y: i32, z: i32) -> f32 {
-        let (px, py, pz) = (x as f64, y as f64, z as f64);
+        let s = SIDE_LENGTH as f64;
+        let (px, py, pz) = (x as f64 * s, y as f64 * s, z as f64 * s);
         let mut frequency = SEA_FREQUENCY;
         let mut amplitude = 1.0_f32;
         let mut weight = 1.0_f32;
@@ -156,11 +158,11 @@ impl ScalarField for SeaField {
     }
 
     fn value(&self, x: i32, y: i32, z: i32) -> f32 {
-        let yf = y as f32;
+        let world_y = y as f32 * SIDE_LENGTH;
         // Solid below, water above; noise raises the surface into hills/arches.
-        let mut v = (yf + SEA_FLOOR_OFFSET) - self.fbm(x, y, z) * SEA_NOISE_WEIGHT;
+        let mut v = (world_y + SEA_FLOOR_OFFSET) - self.fbm(x, y, z) * SEA_NOISE_WEIGHT;
         // Hard sea bed underneath.
-        if yf < SEA_HARD_FLOOR_Y {
+        if world_y < SEA_HARD_FLOOR_Y {
             v -= SEA_HARD_FLOOR_WEIGHT;
         }
         v
