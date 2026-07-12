@@ -48,9 +48,11 @@ is halved.
 
 ### 4. Terrain material overdraw — **`low_spec`**
 `setup_terrain` used `cull_mode: None` + `double_sided: true`, doubling fragment work on
-all terrain. Under `low_spec` terrain renders single-sided (back-face culled). If cave
-interiors look inside-out with this on, flip the triangle winding in
-`marching::mesh_from_positions` — the fix is a winding swap, not double-siding everything.
+all terrain. Under `low_spec` terrain renders single-sided (back-face culled). Marching-cubes triangles
+are wound front-face-into-the-rock, which single-sided culling would show inside-out, so
+`marching::mesh_from_positions` reverses the winding (const `FLIP_WINDING` in
+`terrain/mod.rs`) to point front faces into the open water. Flip that const if a future
+tables change inverts it again.
 
 ### 5. Corner-value caching (always on, look-preserving)
 `marching::build_chunk_positions` recomputed the (expensive, 4-octave FBM) field value at

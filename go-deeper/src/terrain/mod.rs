@@ -60,6 +60,12 @@ pub const SEA_HARD_FLOOR_WEIGHT: f32 = 75.0;
 /// vertices. Flip to `false` for the retro blocky look.
 pub const SMOOTH_TERRAIN: bool = true;
 
+/// Reverse marching-cubes triangle winding so front faces point into the open water. Needed
+/// for single-sided rendering (the `low_spec` preset) — otherwise cave interiors look
+/// inside-out. Neutral when terrain is `double_sided`. See the WINDING NOTE in
+/// `marching::mesh_from_positions`.
+pub const FLIP_WINDING: bool = true;
+
 /// World-height range mapped onto the color gradient (below -> deep colors, above -> shallow).
 pub const COLOR_Y_MIN: f32 = -150.0;
 pub const COLOR_Y_MAX: f32 = 150.0;
@@ -151,8 +157,8 @@ fn setup_terrain(mut commands: Commands, mut materials: ResMut<Assets<StandardMa
         perceptual_roughness: 0.9,
         // Rendering walls from both sides (`cull_mode: None` + `double_sided`) makes cave
         // interiors visible but doubles fragment work on all terrain. `low_spec` renders
-        // single-sided (back-face culled); if interiors look inside-out, flip the winding in
-        // `marching::mesh_from_positions` rather than paying 2x everywhere.
+        // single-sided (back-face culled); the mesh winding is set up for that (see
+        // `FLIP_WINDING` / the WINDING NOTE in `marching::mesh_from_positions`).
         #[cfg(feature = "low_spec")]
         cull_mode: Some(bevy::render::render_resource::Face::Back),
         #[cfg(not(feature = "low_spec"))]

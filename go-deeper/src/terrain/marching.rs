@@ -13,7 +13,9 @@ use bevy::prelude::*;
 
 use super::field::ScalarField;
 use super::tables::{EDGES, TRIANGLE_TABLE};
-use super::{COLOR_NORMAL_OFFSET, COLOR_Y_MAX, COLOR_Y_MIN, POINTS_PER_CHUNK, SIDE_LENGTH};
+use super::{
+    COLOR_NORMAL_OFFSET, COLOR_Y_MAX, COLOR_Y_MIN, FLIP_WINDING, POINTS_PER_CHUNK, SIDE_LENGTH,
+};
 
 /// Corner index -> offset from the cell base, in cell units. This is the game's own corner
 /// numbering (`PointCoord.oldVertexIndexToPointCoordinate`), kept consistent with [`EDGES`].
@@ -119,11 +121,24 @@ pub fn mesh_from_positions(positions: Vec<Vec3>) -> Option<Mesh> {
     let mut uvs: Vec<[f32; 2]> = Vec::with_capacity(positions.len());
     let mut colors: Vec<[f32; 4]> = Vec::with_capacity(positions.len());
 
-    for tri in positions.chunks_exact(3) {
+    for raw in positions.chunks_exact(3) {
+        // WINDING NOTE: the marching-cubes tables emit triangles wound so their front face
+        // points *into* the solid rock. That's invisible when we render both sides
+        // (`double_sided`), but with single-sided back-face culling (the `low_spec` preset)
+        // the submarine — which sits inside the open water — sees the culled back faces and
+        // the caves look inside-out. Reversing the winding (swap 2nd/3rd vertex) makes the
+        // front face point into the open water, so interiors render correctly. The normal is
+        // derived from the same winding below, so it flips with it and lighting stays right.
+        // Toggle `FLIP_WINDING` in `terrain/mod.rs` if a future table change inverts this.
+        let tri: [Vec3; 3] = if FLIP_WINDING {
+            [raw[0], raw[2], raw[1]]
+        } else {
+            [raw[0], raw[1], raw[2]]
+        };
         let (a, b, c) = (tri[0], tri[1], tri[2]);
-        // Flat normal (the original's double negation cancels out to a plain cross product).
+        // Flat normal, consistent with the (possibly flipped) winding above.
         let normal = (b - a).cross(c - a).normalize_or_zero();
-        for &v in tri {
+        for &v in &tri {
             verts.push([v.x, v.y, v.z]);
             normals.push([normal.x, normal.y, normal.z]);
             // Simple planar UVs so a tiled texture has something to map to.
