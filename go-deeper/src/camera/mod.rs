@@ -1,11 +1,13 @@
 use crate::*;
 #[cfg(not(feature = "third_person"))]
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
-#[cfg(feature = "native")]
+#[cfg(all(feature = "native", not(feature = "low_spec")))]
 use bevy::{anti_alias::taa::TemporalAntiAliasing, pbr::ScreenSpaceAmbientOcclusion};
+#[cfg(not(feature = "low_spec"))]
+use bevy::post_process::bloom::Bloom;
 use bevy::{
     camera::Exposure, core_pipeline::tonemapping::Tonemapping, light::ShadowFilteringMethod,
-    post_process::bloom::Bloom, render::view::Hdr,
+    render::view::Hdr,
 };
 
 // mod gamepad_cursor;
@@ -37,16 +39,25 @@ pub fn spawn_camera(mut commands: Commands) {
         (
             Exposure::BLENDER,
             Tonemapping::TonyMcMapface,
+            // Bloom is a multi-pass downsample/upsample chain — too costly on iGPUs.
+            #[cfg(not(feature = "low_spec"))]
             Bloom::NATURAL,
             Hdr,
         ),
         // performance critical
         (
             Msaa::Off,
-            #[cfg(feature = "native")] // breaks wasm
+            // TAA (motion vectors + history buffer) and SSAO are the heaviest post-fx on
+            // integrated GPUs, so `low_spec` drops them.
+            #[cfg(all(feature = "native", not(feature = "low_spec")))] // breaks wasm
             TemporalAntiAliasing::default(),
+            // Temporal shadow filtering relies on TAA jitter; without TAA use the cheap
+            // hardware 2x2 filter instead.
+            #[cfg(not(feature = "low_spec"))]
             ShadowFilteringMethod::Temporal,
-            #[cfg(feature = "native")] // See https://github.com/bPluginevyengine/bevy/issues/20459
+            #[cfg(feature = "low_spec")]
+            ShadowFilteringMethod::Hardware2x2,
+            #[cfg(all(feature = "native", not(feature = "low_spec")))] // See https://github.com/bPluginevyengine/bevy/issues/20459
             ScreenSpaceAmbientOcclusion::default(),
         ),
     ));

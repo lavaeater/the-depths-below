@@ -5,6 +5,7 @@
 //! `docs/plan.md` for the porting plan and phase breakdown.
 
 use crate::*;
+use bevy::camera::primitives::{Aabb, Frustum};
 use bevy::tasks::{AsyncComputeTaskPool, Task, block_on, futures_lite::future};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -32,8 +33,9 @@ pub const NOISE_PERIOD: f64 = 100.0;
 
 // ---- Sea-floor FBM density (ported in spirit from Sebastian Lague's `NoiseDensity.compute`) ----
 
-/// Number of FBM octaves.
-pub const SEA_OCTAVES: usize = 5;
+/// Number of FBM octaves. FBM cost is linear in octaves; 4 keeps the shape while trimming
+/// noise work (was 5).
+pub const SEA_OCTAVES: usize = 4;
 /// Frequency multiplier between octaves.
 pub const SEA_LACUNARITY: f64 = 2.0;
 /// Amplitude multiplier between octaves.
@@ -66,15 +68,22 @@ pub const COLOR_NORMAL_OFFSET: f32 = 25.0;
 
 // ---- Streaming radii (a simpler, symmetric take on `WorldManager`'s forward-biased box) ----
 
-/// Chunks kept loaded around the sub, horizontally. ~768 world units at radius 3, well past
-/// the fog distance, so raising it mostly just costs memory.
-pub const LOAD_RADIUS_XZ: i32 = 3;
+/// Chunks kept loaded around the sub, horizontally. Radius 2 (~512 world units) already
+/// reaches past the fog (fully opaque by ~450 units), so radius 3 was generating terrain you
+/// can't see. Raise it only if you thin the fog.
+pub const LOAD_RADIUS_XZ: i32 = 2;
 /// Chunks kept loaded around the sub, vertically (caves are wider than they are tall).
 pub const LOAD_RADIUS_Y: i32 = 2;
 /// Extra margin before a chunk outside the load radius is despawned (hysteresis).
 pub const UNLOAD_MARGIN: i32 = 1;
 /// Max chunk-generation tasks spawned per frame (they then run off the main thread).
 pub const CHUNKS_PER_FRAME: i32 = 8;
+/// Chunks within this Chebyshev radius are always generated regardless of the camera
+/// frustum, so collision works and turning in place doesn't reveal empty space.
+pub const ALWAYS_LOAD_RADIUS: i32 = 1;
+/// Chunks within this Chebyshev radius of the sub get an active trimesh collider; farther
+/// chunks keep their (pre-built) collider dormant so physics broadphase stays cheap.
+pub const COLLIDER_RADIUS: i32 = 1;
 
 /// World size of one chunk along an axis.
 pub const CHUNK_WORLD_SIZE: f32 = POINTS_PER_CHUNK as f32 * SIDE_LENGTH;
@@ -114,13 +123,18 @@ type ChunkBuild = Option<(Mesh, Option<Collider>)>;
 #[derive(Component)]
 struct ChunkTask(Task<ChunkBuild>);
 
+/// A chunk's pre-built trimesh collider, kept dormant until the sub is close enough for it to
+/// be worth adding to the physics world (see [`manage_colliders`]).
+#[derive(Component)]
+struct ChunkCollider(Collider);
+
 pub fn plugin(app: &mut App) {
     app.init_resource::<TerrainField>()
         .init_resource::<LoadedChunks>()
         .add_systems(OnEnter(Screen::Gameplay), setup_terrain)
         .add_systems(
             Update,
-            (stream_chunks, receive_chunks).run_if(in_state(Screen::Gameplay)),
+            (stream_chunks, receive_chunks, manage_colliders).run_if(in_state(Screen::Gameplay)),
         )
         .add_systems(OnExit(Screen::Gameplay), teardown_terrain);
 }
@@ -135,10 +149,15 @@ fn setup_terrain(mut commands: Commands, mut materials: ResMut<Assets<StandardMa
         // White so the per-vertex height gradient (see `marching::mesh_from_positions`) shows.
         base_color: Color::WHITE,
         perceptual_roughness: 0.9,
-        // Render walls from both sides so cave interiors (and any wall the sub is next to)
-        // are visible — otherwise back-face culling makes them look invisible from inside.
+        // Rendering walls from both sides (`cull_mode: None` + `double_sided`) makes cave
+        // interiors visible but doubles fragment work on all terrain. `low_spec` renders
+        // single-sided (back-face culled); if interiors look inside-out, flip the winding in
+        // `marching::mesh_from_positions` rather than paying 2x everywhere.
+        #[cfg(feature = "low_spec")]
+        cull_mode: Some(bevy::render::render_resource::Face::Back),
+        #[cfg(not(feature = "low_spec"))]
         cull_mode: None,
-        double_sided: true,
+        double_sided: cfg!(not(feature = "low_spec")),
         ..default()
     });
     commands.insert_resource(TerrainMaterial(material));
@@ -154,12 +173,15 @@ fn teardown_terrain(mut loaded: ResMut<LoadedChunks>) {
 fn stream_chunks(
     field: Res<TerrainField>,
     subs: Query<&Transform, With<player::Submarine>>,
+    cameras: Query<&Frustum, With<SceneCamera>>,
     mut loaded: ResMut<LoadedChunks>,
     mut commands: Commands,
 ) {
     let Ok(sub) = subs.single() else {
         return;
     };
+    // Used to skip generating chunks the camera can't see (outside the always-load ring).
+    let frustum = cameras.single().ok();
     let center = world_to_chunk(sub.translation);
 
     // Despawn chunks that drifted outside the keep radius.
@@ -189,6 +211,19 @@ fn stream_chunks(
                     let coord = center + IVec3::new(dx, dy, dz);
                     if loaded.0.contains_key(&coord) {
                         continue;
+                    }
+
+                    // Always load the near ring (for collision + turning in place); beyond
+                    // it, skip chunks outside the camera frustum.
+                    let near = dx.abs() <= ALWAYS_LOAD_RADIUS
+                        && dy.abs() <= ALWAYS_LOAD_RADIUS
+                        && dz.abs() <= ALWAYS_LOAD_RADIUS;
+                    if !near && let Some(frustum) = frustum {
+                        let min = coord.as_vec3() * CHUNK_WORLD_SIZE;
+                        let aabb = Aabb::from_min_max(min, min + Vec3::splat(CHUNK_WORLD_SIZE));
+                        if !frustum.intersects_obb_identity(&aabb) {
+                            continue;
+                        }
                     }
 
                     let field = field.0.clone();
@@ -235,8 +270,35 @@ fn receive_chunks(
         if let Some((mesh, collider)) = result {
             entity.insert((Mesh3d(meshes.add(mesh)), MeshMaterial3d(material.0.clone())));
             if let Some(collider) = collider {
-                entity.insert((RigidBody::Static, collider));
+                // Store it dormant; `manage_colliders` activates it only when the sub is near.
+                entity.insert(ChunkCollider(collider));
             }
+        }
+    }
+}
+
+/// Attach an active `Collider`/`RigidBody` to chunks within [`COLLIDER_RADIUS`] of the sub and
+/// strip it from chunks that drift away, so avian's broadphase only tracks nearby terrain.
+fn manage_colliders(
+    subs: Query<&Transform, With<player::Submarine>>,
+    chunks: Query<(Entity, &TerrainChunk, &ChunkCollider, Has<Collider>)>,
+    mut commands: Commands,
+) {
+    let Ok(sub) = subs.single() else {
+        return;
+    };
+    let center = world_to_chunk(sub.translation);
+    for (entity, chunk, collider, has_collider) in &chunks {
+        let d = chunk.0 - center;
+        let near = d.x.abs() <= COLLIDER_RADIUS
+            && d.y.abs() <= COLLIDER_RADIUS
+            && d.z.abs() <= COLLIDER_RADIUS;
+        if near && !has_collider {
+            commands
+                .entity(entity)
+                .insert((RigidBody::Static, collider.0.clone()));
+        } else if !near && has_collider {
+            commands.entity(entity).remove::<(RigidBody, Collider)>();
         }
     }
 }

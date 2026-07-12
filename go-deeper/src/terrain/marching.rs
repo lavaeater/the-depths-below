@@ -45,17 +45,34 @@ pub fn build_chunk_positions(field: &dyn ScalarField, chunk: IVec3, smooth: bool
     let origin = chunk * POINTS_PER_CHUNK;
     let iso = field.iso();
 
+    // Sample the (expensive) field once per grid point instead of up to 8× per shared corner.
+    // The grid spans `POINTS_PER_CHUNK + 1` points along each axis (cells need their far corner).
+    let dim = (POINTS_PER_CHUNK + 1) as usize;
+    let cache_index = |x: usize, y: usize, z: usize| (x * dim + y) * dim + z;
+    let mut cache = vec![0.0f32; dim * dim * dim];
+    for gx in 0..dim {
+        for gy in 0..dim {
+            for gz in 0..dim {
+                let p = origin + IVec3::new(gx as i32, gy as i32, gz as i32);
+                cache[cache_index(gx, gy, gz)] = field.value(p.x, p.y, p.z);
+            }
+        }
+    }
+
     for lx in 0..POINTS_PER_CHUNK {
         for ly in 0..POINTS_PER_CHUNK {
             for lz in 0..POINTS_PER_CHUNK {
                 let cell = origin + IVec3::new(lx, ly, lz);
 
-                // Sample the density at the 8 corners, and build the solidity mask.
+                // Read the 8 corner densities from the cache, and build the solidity mask.
                 let mut vals = [0.0f32; 8];
                 let mut mask = 0usize;
                 for (i, offset) in CORNER_OFFSET.iter().enumerate() {
-                    let c = cell + *offset;
-                    let v = field.value(c.x, c.y, c.z);
+                    let v = cache[cache_index(
+                        (lx + offset.x) as usize,
+                        (ly + offset.y) as usize,
+                        (lz + offset.z) as usize,
+                    )];
                     vals[i] = v;
                     if v < iso {
                         mask |= 1 << i;

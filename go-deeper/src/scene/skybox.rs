@@ -25,6 +25,13 @@ pub fn add_skybox_to_camera(
 ) -> Result {
     let cascade_shadow_config = CascadeShadowConfigBuilder {
         first_cascade_far_bound: 0.3,
+        // Each cascade re-renders the streaming terrain, so `low_spec` uses fewer, shorter
+        // cascades.
+        #[cfg(feature = "low_spec")]
+        num_cascades: 2,
+        #[cfg(feature = "low_spec")]
+        maximum_distance: cfg.physics.shadow_distance * 0.5,
+        #[cfg(not(feature = "low_spec"))]
         maximum_distance: cfg.physics.shadow_distance,
         ..default()
     }
@@ -48,7 +55,9 @@ pub fn add_skybox_to_camera(
         DespawnOnExit(Screen::Gameplay),
         DirectionalLight {
             color: colors::MOON,
-            shadows_enabled: true,
+            // Second shadow-casting light doubles the shadow-map passes over the terrain;
+            // `low_spec` keeps only the Sun casting shadows.
+            shadows_enabled: cfg!(not(feature = "low_spec")),
             illuminance: 24.0,
             ..Default::default()
         },

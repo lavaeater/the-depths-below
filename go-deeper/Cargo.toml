@@ -84,6 +84,9 @@ top_down = ["bevy_top_down_camera"]
 third_person = ["bevy_third_person_camera"]
 native = [ "enhanced" ]
 web = [ "bevy/webgpu", "bevy_seedling/web_audio", "third_person" ]
+# Low-spec / integrated-GPU preset: turns off the expensive GPU-side rendering (SSAO, TAA,
+# bloom, second shadow-casting light, double-sided terrain). See docs/performance.md.
+low_spec = []
 dev = [
     "bevy_perf_ui",
     "bevy/bevy_dev_tools",
@@ -102,11 +105,14 @@ dev_native = [
     "bevy/embedded_watcher",        # Enable embedded asset hot reloading for native dev builds.
 ]
 enhanced = [
-    "bevy/meshlet",                 # new nanite-like rendering system
-    "bevy/meshlet_processor",       # Enables processing meshes into meshlet meshes for bevy_pbr
     "bevy/pbr_light_textures",      # PBR light textures
     "bevy/pbr_specular_textures",   # PBR specular maps
-
+]
+# Nanite-like meshlet rendering. Not used by the game (we spawn no `MeshletMesh`) and poorly
+# supported on integrated GPUs, so it's opt-in rather than pulled in by `native`/`enhanced`.
+meshlet = [
+    "bevy/meshlet",                 # new nanite-like rendering system
+    "bevy/meshlet_processor",       # Enables processing meshes into meshlet meshes for bevy_pbr
 ]
 debug = [
     "bevy/trace_tracy",
