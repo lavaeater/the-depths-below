@@ -43,3 +43,12 @@ args = ["serve", "--hot-patch", "--features", "dev_native"]
 command = "cargo"
 args = ["run", "--features", "debug", "--release"]
 
+# Release build with the low-spec / integrated-GPU preset (see docs/performance.md).
+[tasks.low]
+command = "cargo"
+args = [
+    "run", "--release",
+    "--no-default-features",
+    "--features", "native,third_person,low_spec",
+]
+
