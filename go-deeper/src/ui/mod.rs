@@ -1,0 +1,36 @@
+use crate::*;
+use bevy::{
+    ecs::{
+        spawn::SpawnRelated,
+        system::{Commands, Query},
+    },
+    reflect::Reflect,
+    ui::{
+        AlignItems, BorderRadius, Display, FlexDirection, JustifyContent, Node, PositionType,
+        UiRect, Val::*,
+    },
+    ui_widgets::Button,
+    window::Window,
+};
+
+mod constants;
+mod interaction;
+pub mod modal;
+
+#[cfg(feature = "dev")]
+mod perf;
+mod prefabs;
+mod props;
+pub mod widget;
+
+pub use constants::*;
+pub use modal::*;
+pub use prefabs::*;
+pub use props::*;
+
+pub fn plugin(app: &mut App) {
+    app.add_plugins((prefabs::plugin, interaction::plugin));
+
+    #[cfg(feature = "dev")]
+    app.add_plugins(perf::plugin);
+}
